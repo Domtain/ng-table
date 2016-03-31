@@ -11,6 +11,19 @@
         -ms-user-select: none;
         user-select: none;
 
+        .ng-table-header {
+            i {
+                opacity: 0.3;
+                font-size: 1.2rem;
+                &:hover {
+                    opacity: 1;
+                }
+            }
+            &.sort-indicator > i {
+                margin-left: 0.3rem;
+            }
+        }
+
         &.sortable {
             cursor: pointer;
 

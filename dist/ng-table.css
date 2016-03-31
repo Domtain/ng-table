@@ -7,6 +7,16 @@
   -ms-user-select: none;
   user-select: none;
 }
+.ng-table th .ng-table-header i {
+  opacity: 0.3;
+  font-size: 1.2rem;
+}
+.ng-table th .ng-table-header i:hover {
+  opacity: 1;
+}
+.ng-table th .ng-table-header.sort-indicator > i {
+  margin-left: 0.3rem;
+}
 .ng-table th.sortable {
   cursor: pointer;
 }
