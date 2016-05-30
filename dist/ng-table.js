@@ -1041,36 +1041,33 @@
              * @param {boolean} asString flag indicates return array of string or object
              * @returns {Array} If asString = true will be return array of url string parameters else key-value object
              */
-            this.url = function(asString) {
+            this.url = function (asString) {
                 asString = asString || false;
                 var pairs = (asString ? [] : {});
                 for (var key in params) {
                     if (params.hasOwnProperty(key)) {
                         var item = params[key],
                             name = encodeURIComponent(key);
-                        if (typeof item === "object") {
-                            for (var subkey in item) {
-                                if (isSignificantValue(item[subkey], key)) {
-                                    var pname = name + "[" + encodeURIComponent(subkey) + "]";
-                                    collectValue(item[subkey], pname);
+                        if (Object.getOwnPropertyNames(item).length > 0) {
+                            if (isSignificantValue(item, key)) {
+                                if (typeof item === "object" && !angular.isFunction(item)) {
+                                    collectValue(item, name);
                                 }
                             }
-                        } else if (!angular.isFunction(item) && isSignificantValue(item, key)) {
-                            collectValue(item, name);
                         }
                     }
                 }
                 return pairs;
 
-                function collectValue(value, key){
+                function collectValue(value, key) {
                     if (asString) {
-                        pairs.push(key + "=" + encodeURIComponent(value));
+                        pairs.push(key + "=" + value);
                     } else {
-                        pairs[key] = encodeURIComponent(value);
+                        pairs[key] = value;
                     }
                 }
 
-                function isSignificantValue(value, key){
+                function isSignificantValue(value, key) {
                     return key === "group" ? true : angular.isDefined(value) && value !== "";
                 }
             };
