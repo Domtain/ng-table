@@ -1048,11 +1048,14 @@
                     if (params.hasOwnProperty(key)) {
                         var item = params[key],
                             name = encodeURIComponent(key);
-                        if (Object.getOwnPropertyNames(item).length > 0) {
-                            if (isSignificantValue(item, key)) {
-                                if (typeof item === "object" && !angular.isFunction(item)) {
+                        if (isSignificantValue(item, key)) {
+                            if (typeof item === "object" && !angular.isFunction(item)) {
+                                if (Object.getOwnPropertyNames(item).length > 0) {
                                     collectValue(item, name);
                                 }
+                            }
+                            else {
+                                collectValue(item, name);
                             }
                         }
                     }
