@@ -39,6 +39,7 @@
                 defaultFilterOptions = {
                     filterComparator: undefined, // look for a substring match in case insensitive way
                     filterDelay: 500,
+                    filterReload: true,          // reload on filter change (default: true)
                     filterDelayThreshold: 10000, // size of dataset array that will trigger the filterDelay being applied
                     filterFilterName: undefined, // when defined overrides ngTableDefaultGetDataProvider.filterFilterName
                     filterFn: undefined, // when defined overrides the filter function that ngTableDefaultGetData uses
