@@ -1,29 +1,35 @@
-describe('NgTableParams', function () {
-    var scope,
-        NgTableParams,
-        $rootScope;
+describe('NgTableParams', () => {
+    interface IScopeWithPrivates extends ng.IScope {
+        $$listenerCount: { [name: string]: number }
+    }
+    
+    var scope: ng.IScope,
+        NgTableParams: NgTable.ITableParamsConstructor<any>,
+        $rootScope: IScopeWithPrivates;
 
-    beforeEach(module("ngTable"));
-    beforeEach(function(){
-        module(function($provide){
+    beforeEach(angular.mock.module("ngTable"));
+    beforeEach(() => {
+        angular.mock.module(($provide: ng.auto.IProvideService) => {
             $provide.decorator('ngTableDefaultGetData', createSpy);
 
 
             createSpy.$inject = ['$delegate'];
-            function createSpy(ngTableDefaultGetData){
+            function createSpy(ngTableDefaultGetData: NgTable.Data.IDefaultGetData<any>){
                 return jasmine.createSpy('ngTableDefaultGetDataSpy',ngTableDefaultGetData).and.callThrough();
             }
         });
     });
 
-    beforeEach(inject(function ($controller, _$rootScope_, _NgTableParams_) {
+    beforeEach(inject(($controller: ng.IControllerService, _$rootScope_: IScopeWithPrivates, _NgTableParams_: NgTable.ITableParamsConstructor<any>) => {
         $rootScope = _$rootScope_;
         scope = $rootScope.$new();
         NgTableParams = _NgTableParams_;
     }));
 
-    function createNgTableParams(settings) {
-        var initialParams;
+    function createNgTableParams<T>(initialParams?: NgTable.IParamValues<T>, settings?: NgTable.ISettings<T>) : NgTableParams<T>;
+    function createNgTableParams<T>(settings?: NgTable.ISettings<T>) : NgTableParams<T>;
+    function createNgTableParams<T>(settings?: any) : NgTableParams<T> {
+        var initialParams: NgTable.IParamValues<T>;
         if (arguments.length === 2){
             initialParams = arguments[0];
             settings = arguments[1];
@@ -38,12 +44,13 @@ describe('NgTableParams', function () {
         return tableParams;
     }
 
-    it('NgTableParams should be defined', function () {
+    it('NgTableParams should be defined', () => {
         expect(NgTableParams).toBeDefined();
     });
 
-    describe('generatePagesArray', function(){
-        it('should generate pages array using arguments supplied', function(){
+    describe('generatePagesArray', () => {
+        it('should generate pages array using arguments supplied', () => {
+            //crap
             var params = new NgTableParams();
             expect(params.generatePagesArray(1, 30, 10)).toEqual([
                 { type: 'prev', number: 1, active: false },
@@ -51,14 +58,14 @@ describe('NgTableParams', function () {
                 { type: 'page', number: 2, active: true, current: false },
                 { type: 'last', number: 3, active: true, current: false },
                 { type: 'next', number: 2, active: true }
-            ]);
+            ] as NgTable.IPageButton[]);
             expect(params.generatePagesArray(2, 30, 10)).toEqual([
                 { type: 'prev', number: 1, active: true },
                 { type: 'first', number: 1, active: true, current: false },
                 { type: 'page', number: 2, active: false, current: true },
                 { type: 'last', number: 3, active: true, current: false },
                 { type: 'next', number: 3, active: true }
-            ]);
+            ] as NgTable.IPageButton[]);
             expect(params.generatePagesArray(2, 100, 10)).toEqual([
                 { type: 'prev', number: 1, active: true },
                 { type: 'first', number: 1, active: true, current: false },
@@ -71,10 +78,10 @@ describe('NgTableParams', function () {
                 { type: 'more', active: false },
                 { type: 'last', number: 10, active: true, current: false },
                 { type: 'next', number: 3, active: true }
-            ]);
+            ] as NgTable.IPageButton[]);
         });
 
-        it('should use own parameter values to generate pages when no arguments supplied', function(){
+        it('should use own parameter values to generate pages when no arguments supplied', () => {
             var params = new NgTableParams({ page: 2, count: 10 }, { total: 30 });
 
             expect(params.generatePagesArray()).toEqual([
@@ -83,12 +90,12 @@ describe('NgTableParams', function () {
                 { type: 'page', number: 2, active: false, current: true },
                 { type: 'last', number: 3, active: true, current: false },
                 { type: 'next', number: 3, active: true }
-            ]);
+            ] as NgTable.IPageButton[]);
 
         });
     });
 
-    it('NgTableParams `page` parameter', function () {
+    it('NgTableParams `page` parameter', () => {
         var params = new NgTableParams();
 
         expect(params.page()).toBe(1);
@@ -101,7 +108,7 @@ describe('NgTableParams', function () {
         expect(params.page()).toBe(3);
     });
 
-    it('NgTableParams parse url parameters', function () {
+    it('NgTableParams parse url parameters', () => {
         var params = new NgTableParams({
             'sorting[name]': 'asc',
             'sorting[age]': 'desc',
@@ -110,14 +117,14 @@ describe('NgTableParams', function () {
             'group[name]' : 'asc',
             'group[age]' : 'desc',
             'group[surname]' : undefined
-        });
+        } as any);
 
         expect(params.filter()).toEqual({ 'name': 'test', 'age': 20 });
         expect(params.sorting()).toEqual({ 'age': 'desc' }); // sorting only by one column - todo: remove restriction
         expect(params.group()).toEqual({ 'name' : 'asc', 'age': 'desc', 'surname': undefined });
     });
 
-    it('NgTableParams return url parameters', function () {
+    it('NgTableParams return url parameters', () => {
         var params = new NgTableParams({
             'sorting[name]': 'asc',
             'sorting[age]': 'desc',
@@ -126,7 +133,7 @@ describe('NgTableParams', function () {
             'group[name]' : 'asc',
             'group[age]' : 'desc',
             'group[surname]' : ''
-        });
+        } as any);
         expect(params.url()).toEqual({
             'page': '1',
             'count': '10',
@@ -149,9 +156,9 @@ describe('NgTableParams', function () {
         ]);
     });
 
-    it('orderBy', function () {
+    it('orderBy', () => {
         var params = new NgTableParams({
-            'sorting[name]': 'asc'
+            sorting: { name: 'asc'}
         });
 
         expect(params.orderBy()).toEqual([ '+name' ]); // for angular sorting function
@@ -161,8 +168,8 @@ describe('NgTableParams', function () {
         expect(params.orderBy()).toEqual([ '-name', '+age' ]);
     });
 
-    describe('group', function(){
-        it('one group', function () {
+    describe('group', () => {
+        it('one group', () => {
             var params = new NgTableParams({
                 group: 'role'
             }, {
@@ -183,7 +190,7 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual({ age: 'asc' });
         });
 
-        it('one group (nested property)', function () {
+        it('one group (nested property)', () => {
             var params = new NgTableParams({
                 group: 'details.personal.age'
             }, {
@@ -204,7 +211,7 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual({ 'details.country': 'asc' });
         });
 
-        it('one group function', function () {
+        it('one group function', () => {
             var params = new NgTableParams({
                 group: angular.identity
             });
@@ -215,7 +222,7 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual(angular.identity);
 
 
-            var fn = function(){ };
+            var fn: NgTable.IGroupingFunc<any> = () => '';
             fn.sortDirection = 'desc';
             params.group(fn);
             expect(params.hasGroup(fn)).toBe(true);
@@ -223,7 +230,7 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual(fn);
         });
 
-        it('can clear group', function () {
+        it('can clear group', () => {
             var params = new NgTableParams({
                 group: 'role'
             });
@@ -235,14 +242,14 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual({});
         });
 
-        it('multiple groups', function () {
+        it('multiple groups', () => {
             var params = new NgTableParams({
                 group: 'role'
             }, {
                 groupOptions: { defaultSort: 'desc' }
             });
 
-            var newGroups = _.extend({}, params.group(), { age: 'desc'});
+            var newGroups = _.extend<{}, NgTable.IGroupValues>({}, params.group(), { age: 'desc'});
             params.group(newGroups);
             expect(params.hasGroup()).toBe(true);
             expect(params.hasGroup('role')).toBe(true);
@@ -257,7 +264,7 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual({ role: 'asc', age: 'asc' });
         });
 
-        it('should apply current defaultSort from groupOptions', function(){
+        it('should apply current defaultSort from groupOptions', () => {
             var params = new NgTableParams({
                 group: 'role'
             }, {
@@ -270,7 +277,7 @@ describe('NgTableParams', function () {
             expect(params.group()).toEqual({ age: 'asc' });
         });
 
-        it('should not apply defaultSort from groupOptions when explicitly set to empty string', function(){
+        it('should not apply defaultSort from groupOptions when explicitly set to empty string', () => {
             var params = new NgTableParams({
                 group: 'role'
             }, {
@@ -289,12 +296,12 @@ describe('NgTableParams', function () {
         });
     });
 
-    describe('settings', function(){
+    describe('settings', () => {
 
-        it('defaults', function () {
+        it('defaults', () => {
             var params = new NgTableParams();
 
-            var expectedSettings = {
+            var expectedSettings: NgTable.ISettings<any> = {
                 $loading: false,
                 dataset: null,
                 total: 0,
@@ -329,7 +336,7 @@ describe('NgTableParams', function () {
             expect(params.settings()).toEqual(jasmine.objectContaining(expectedSettings));
         });
 
-        it('changing settings().dataset should reset page to 1', function(){
+        it('changing settings().dataset should reset page to 1', () => {
             // given
             var tableParams = createNgTableParams({ count: 1, page: 2 }, { dataset: [1,2,3]});
             tableParams.reload();
@@ -343,58 +350,57 @@ describe('NgTableParams', function () {
             expect(tableParams.page()).toBe(1);
         });
 
-        it('should not set filterDelay when working with synchronous dataset', function(){
+        it('should not set filterDelay when working with synchronous dataset', () => {
             // given
             var tableParams = new NgTableParams({}, { dataset: [1,2,3]});
             expect(tableParams.settings().filterOptions.filterDelay).toBe(0);
         });
 
-        it('should not set filterDelay when working with synchronous dataset (empty dataset)', function(){
+        it('should not set filterDelay when working with synchronous dataset (empty dataset)', () => {
             // given
             var tableParams = new NgTableParams({}, { dataset: []});
             expect(tableParams.settings().filterOptions.filterDelay).toBe(0);
         });
 
-        it('should set filterDelay when not certain working with synchronous dataset', function(){
+        it('should set filterDelay when not certain working with synchronous dataset', () => {
             // given
-            var tableParams = new NgTableParams({}, { dataset: [1,2], getData: function(){
+            var tableParams = new NgTableParams({}, { dataset: [1,2], getData: () => {
                 // am I sync or async?
+                return [1];
             }});
             expect(tableParams.settings().filterOptions.filterDelay).toBe(500);
         });
 
-        it('should set filterDelay when dataset exceeds filterDelayThreshold', function(){
+        it('should set filterDelay when dataset exceeds filterDelayThreshold', () => {
             // given
             var tableParams = new NgTableParams({}, { filterOptions: { filterDelayThreshold: 5 }, dataset: [,2,3,4,5,6] });
             expect(tableParams.settings().filterOptions.filterDelay).toBe(500);
         });
 
-        it('should allow filterDelay to be set explicitly', function(){
+        it('should allow filterDelay to be set explicitly', () => {
             // given
             var tableParams = new NgTableParams({}, { filterOptions: { filterDelay: 100}, dataset: [1,2] });
             expect(tableParams.settings().filterOptions.filterDelay).toBe(100);
         });
     });
 
-    describe('reload', function(){
+    describe('reload', () => {
 
-        it('should call getData to retrieve data', function(){
+        it('should call getData to retrieve data', () => {
             var tp = createNgTableParams();
             tp.reload();
             scope.$digest();
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
-        it('should add the results returned by getData to the data field', function(){
-            var tp = createNgTableParams({ getData: function(){
-                return [1,2,3];
-            }});
+        it('should add the results returned by getData to the data field', () => {
+            var tp = createNgTableParams({ getData: () => [1,2,3] });
             tp.reload();
             scope.$digest();
             expect(tp.data).toEqual([1,2,3]);
         });
 
-        it('should use ngTableDefaultGetData function when NgTableParams not supplied a getData function', inject(function(ngTableDefaultGetData){
+        it('should use ngTableDefaultGetData function when NgTableParams not supplied a getData function', inject((ngTableDefaultGetData: jasmine.Spy) => {
             // given
             var tp = createNgTableParams();
 
@@ -406,15 +412,13 @@ describe('NgTableParams', function () {
             expect(ngTableDefaultGetData).toHaveBeenCalled();
         }));
 
-        it('should propagate rejection reason from getData', inject(function($q){
+        it('should propagate rejection reason from getData', inject(($q: ng.IQService) => {
             // given
-            var tp = createNgTableParams({ getData: function(){
-                return $q.reject('bad response')
-            }});
+            var tp = createNgTableParams({ getData: () => $q.reject('bad response')});
 
             // when
-            var actualRejection;
-            tp.reload().catch(function(reason){
+            var actualRejection: string;
+            tp.reload().catch(reason => {
                 actualRejection = reason;
             });
             scope.$digest();
@@ -424,10 +428,15 @@ describe('NgTableParams', function () {
         }));
     });
 
-    describe('getGroups', function(){
+    describe('getGroups', () => {
 
-        var dataset;
-        beforeEach(function(){
+        interface IEmployee {
+            name: string;
+            role: string;
+        }
+
+        var dataset: IEmployee[];
+        beforeEach(() => {
             dataset = [
                 { 'name': 'Hanson', 'role': 'Accounting' },
                 { 'name': 'Eaton', 'role': 'Customer Service' },
@@ -446,16 +455,16 @@ describe('NgTableParams', function () {
         });
 
 
-        it('should group data then apply paging to groups', function () {
+        it('should group data then apply paging to groups', () => {
             var tp = createNgTableParams({ count: 2, group: { role: '' } }, { dataset: dataset });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
 
-            expect(actualRoleGroups).toEqual([
+            var expectedRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Accounting',
@@ -473,18 +482,19 @@ describe('NgTableParams', function () {
                         { "name": 'Perry', "role": 'Customer Service' }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
 
-        it('should sort data, then group, then page groups', function () {
+        it('should sort data, then group, then page groups', () => {
             var tp = createNgTableParams({
                 count: 2,
                 sorting: { name: 'desc'},
                 group: { role: '' }
             }, { dataset: dataset });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
@@ -509,10 +519,8 @@ describe('NgTableParams', function () {
             ]);
         });
 
-        it('should use group function to group data', function () {
-            var grouper = function (item) {
-                return item.name[0];
-            };
+        it('should use group function to group data', () => {
+            var grouper: NgTable.IGroupingFunc<IEmployee> = (item) => item.name[0];
             grouper.sortDirection = '';
             var tp = createNgTableParams({
                 count: 2,
@@ -520,8 +528,8 @@ describe('NgTableParams', function () {
                 group: grouper
             }, {dataset: dataset});
 
-            var actualRoleGroups;
-            tp.reload().then(function (groups) {
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
@@ -547,7 +555,7 @@ describe('NgTableParams', function () {
             ]);
         });
 
-        it('should filter and sort data, then group, then page groups', function () {
+        it('should filter and sort data, then group, then page groups', () => {
             var tp = createNgTableParams({
                 count: 2,
                 sorting: { name: 'desc' },
@@ -557,8 +565,8 @@ describe('NgTableParams', function () {
                 dataset: dataset
             });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
@@ -582,7 +590,7 @@ describe('NgTableParams', function () {
             ]);
         });
 
-        it('should filter and sort data, then group, then apply group sortDirection, and finally page groups', function () {
+        it('should filter and sort data, then group, then apply group sortDirection, and finally page groups', () => {
             var tp = createNgTableParams({
                 count: 3,
                 sorting: { name: 'desc' },
@@ -596,8 +604,8 @@ describe('NgTableParams', function () {
                 }
             });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
@@ -628,10 +636,8 @@ describe('NgTableParams', function () {
             ]);
         });
 
-        it('should use sortDirection defined on group function to sort groups', function () {
-            var groupFn = function(item){
-                return item.role;
-            };
+        it('should use sortDirection defined on group function to sort groups', () => {
+            var groupFn: NgTable.IGroupingFunc<IEmployee> = item => item.role;
             groupFn.sortDirection = 'desc';
             var tp = createNgTableParams({
                 count: 3,
@@ -646,8 +652,8 @@ describe('NgTableParams', function () {
                 }
             });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
@@ -679,10 +685,14 @@ describe('NgTableParams', function () {
         });
     });
 
-    describe('getGroups with nested property', function(){
+    describe('getGroups with nested property', () => {
 
-        var dataset;
-        beforeEach(function(){
+        interface IComplexEmployee {
+            details: { name: string, role: string };
+        }
+
+        var dataset: IComplexEmployee[];
+        beforeEach(() => {
             dataset = [
                 { 'details': { 'name': 'Hanson', 'role': 'Accounting' } },
                 { 'details': { 'name': 'Eaton', 'role': 'Customer Service' } },
@@ -701,16 +711,16 @@ describe('NgTableParams', function () {
         });
 
 
-        it('should group data then apply paging to groups', function () {
+        it('should group data then apply paging to groups', () => {
             var tp = createNgTableParams({ count: 2, group: { 'details.role': '' } }, { dataset: dataset });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IComplexEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
 
-            expect(actualRoleGroups).toEqual([
+            let expectedRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Accounting',
@@ -728,23 +738,24 @@ describe('NgTableParams', function () {
                         { 'details': { 'name': 'Perry', 'role': 'Customer Service' } }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
 
-        it('should sort data, then group, then page groups', function () {
+        it('should sort data, then group, then page groups', () => {
             var tp = createNgTableParams({
                 count: 2,
                 sorting: { 'details.name': 'desc'},
                 group: { 'details.role': '' }
             }, { dataset: dataset });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IComplexEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
 
-            expect(actualRoleGroups).toEqual([
+            let expectedRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Asset Management',
@@ -761,13 +772,12 @@ describe('NgTableParams', function () {
                         { 'details': { 'name': 'Mcdonald', 'role': 'Finances' } }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
 
-        it('should use group function to group data', function () {
-            var grouper = function (item) {
-                return item.details.name[0];
-            };
+        it('should use group function to group data', () => {
+            var grouper: NgTable.IGroupingFunc<IComplexEmployee> = item => item.details.name[0];
             grouper.sortDirection = '';
             var tp = createNgTableParams({
                 count: 2,
@@ -775,13 +785,13 @@ describe('NgTableParams', function () {
                 group: grouper
             }, {dataset: dataset});
 
-            var actualRoleGroups;
-            tp.reload().then(function (groups) {
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IComplexEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
 
-            expect(actualRoleGroups).toEqual([
+            let expectedRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Y',
@@ -799,10 +809,11 @@ describe('NgTableParams', function () {
                         { 'details': { 'name': 'Weaver', 'role': 'Payroll' } }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
 
-        it('should filter and sort data, then group, then page groups', function () {
+        it('should filter and sort data, then group, then page groups', () => {
             var tp = createNgTableParams({
                 count: 2,
                 sorting: { 'details.name': 'desc' },
@@ -812,13 +823,13 @@ describe('NgTableParams', function () {
                 dataset: dataset
             });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IComplexEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
 
-            expect(actualRoleGroups).toEqual([
+            let expectedRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Accounting',
@@ -834,10 +845,11 @@ describe('NgTableParams', function () {
                         { 'details': { 'name': 'Wells', 'role': 'Media Relations' } }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
 
-        it('should filter and sort data, then group, then apply group sortDirection, and finally page groups', function () {
+        it('should filter and sort data, then group, then apply group sortDirection, and finally page groups', () => {
             var tp = createNgTableParams({
                 count: 3,
                 sorting: { 'details.name': 'desc' },
@@ -851,13 +863,13 @@ describe('NgTableParams', function () {
                 }
             });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IComplexEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
-
-            expect(actualRoleGroups).toEqual([
+            
+            let expectedRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Payroll',
@@ -880,13 +892,12 @@ describe('NgTableParams', function () {
                         { 'details': { 'name': 'Eaton', 'role': 'Customer Service' } }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
 
-        it('should use sortDirection defined on group function to sort groups', function () {
-            var groupFn = function(item){
-                return item.details.role;
-            };
+        it('should use sortDirection defined on group function to sort groups', () => {
+            var groupFn: NgTable.IGroupingFunc<IComplexEmployee> = item => item.details.role;
             groupFn.sortDirection = 'desc';
             var tp = createNgTableParams({
                 count: 3,
@@ -901,13 +912,13 @@ describe('NgTableParams', function () {
                 }
             });
 
-            var actualRoleGroups;
-            tp.reload().then(function(groups){
+            var actualRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[];
+            tp.reload<NgTable.Data.IDataRowGroup<IComplexEmployee>>().then(groups => {
                 actualRoleGroups = groups;
             });
             $rootScope.$digest();
 
-            expect(actualRoleGroups).toEqual([
+            let expectedRoleGroups: NgTable.Data.IDataRowGroup<IComplexEmployee>[] = [
                 {
                     $hideRows: false,
                     value: 'Payroll',
@@ -930,11 +941,12 @@ describe('NgTableParams', function () {
                         { 'details': { 'name': 'Eaton', 'role': 'Customer Service' } }
                     ]
                 }
-            ]);
+            ];
+            expect(actualRoleGroups).toEqual(expectedRoleGroups);
         });
     });
 
-    it('ngTableParams test defaults', inject(function ($q, ngTableDefaults) {
+    it('ngTableParams test defaults', inject(($q: ng.IQService, ngTableDefaults: NgTable.IDefaults) => {
         ngTableDefaults.params.count = 2;
         ngTableDefaults.settings.counts = [];
         var tp = new NgTableParams();
@@ -952,19 +964,19 @@ describe('NgTableParams', function () {
         expect(tp.settings().interceptors.length).toEqual(1);
     }));
 
-    describe('hasFilter', function(){
-        var tp;
+    describe('hasFilter', () => {
+        var tp: NgTableParams<any>;
 
-        beforeEach(inject(function(){
+        beforeEach(inject(() => {
             tp = new NgTableParams({}, {});
         }));
 
-        it('should return false for an empty filter object', function(){
+        it('should return false for an empty filter object', () => {
             tp.filter({});
             expect(tp.hasFilter()).toBe(false);
         });
 
-        it('should return true for when filter has a field with a significant value', function(){
+        it('should return true for when filter has a field with a significant value', () => {
             tp.filter({ a: 'b' });
             expect(tp.hasFilter()).toBe(true);
 
@@ -972,7 +984,7 @@ describe('NgTableParams', function () {
             expect(tp.hasFilter()).toBe(true);
         });
 
-        it('should return false when filter only has insignificant field values', function(){
+        it('should return false when filter only has insignificant field values', () => {
             tp.filter({ a: '' });
             expect(tp.hasFilter()).toBe(false);
 
@@ -991,76 +1003,74 @@ describe('NgTableParams', function () {
     });
 
 
-    describe('isDataReloadRequired', function(){
-        var tp;
+    describe('isDataReloadRequired', () => {
+        var tp: NgTableParams<{}>;
 
-        beforeEach(inject(function(){
+        beforeEach(inject(() => {
             tp = createNgTableParams();
         }));
 
-        it('should return true after construction', function(){
+        it('should return true after construction', () => {
             expect(tp.isDataReloadRequired()).toBe(true);
         });
 
-        it('should return false once reload called after construction', function(){
+        it('should return false once reload called after construction', () => {
             tp.reload();
             // note: we don't have to wait for the getData promise to be resolved before considering reload
             // to be unnecessary - that's why we're not having to run a $digest
             expect(tp.isDataReloadRequired()).toBe(false);
         });
 
-        it('should return false when getData fails', inject(function($q){
-            tp.settings({ getData: function(){
-                return $q.reject('bad response');
-            }});
+        it('should return false when getData fails', inject(($q: ng.IQService) => {
+            tp.settings({ getData: () => $q.reject('bad response')});
             tp.reload();
             scope.$digest();
             expect(tp.isDataReloadRequired()).toBe(false);
         }));
 
-        it('should detect direct changes to parameters', inject(function($q){
+        it('should detect direct changes to parameters', inject(($q: ng.IQService) => {
             // given
             tp.reload();
             scope.$digest();
             expect(tp.isDataReloadRequired()).toBe(false); // checking assumptions
 
             // when
-            tp.filter().newField = 99;
+            tp.filter()['newField'] = 99;
             expect(tp.isDataReloadRequired()).toBe(true);
         }));
 
-        it('should return true until changed parameters have been reloaded', function(){
+        it('should return true until changed parameters have been reloaded', () => {
             // given
             tp.reload();
             scope.$digest();
 
             // when, then...
-            verifyIsDataReloadRequired(function(){
+            verifyIsDataReloadRequired(() => {
                 tp.filter({ age: 1});
             });
-            verifyIsDataReloadRequired(function(){
+            verifyIsDataReloadRequired(() => {
                 tp.page(55);
             });
-            verifyIsDataReloadRequired(function(){
+            verifyIsDataReloadRequired(() => {
                 tp.sorting({ age: 'desc'});
             });
-            verifyIsDataReloadRequired(function(){
+            verifyIsDataReloadRequired(() => {
                 tp.count(100);
             });
         });
 
-        it('should return true when `$` field on `filter` changes', function(){
+        it('should return true when `$` field on `filter` changes', () => {
             // given
             tp.reload();
             scope.$digest();
             expect(tp.isDataReloadRequired()).toBe(false); // checking assumptions
 
             // when
-            tp.filter().$ = 'cc';
+            tp.filter()['$'] = 'cc';
             expect(tp.isDataReloadRequired()).toBe(true);
         });
 
-        it('should return true when group function sort direction changes', function(){
+        it('should return true when group function sort direction changes', () => {
             // given
             tp.reload();
             scope.$digest();
@@ -1068,7 +1078,7 @@ describe('NgTableParams', function () {
 
             // when, then...
 
-            var grouper = function(){ };
+            var grouper: NgTable.IGroupingFunc<any> = () => '';
             tp.group(grouper);
             expect(tp.isDataReloadRequired()).toBe(true);
 
@@ -1080,7 +1090,7 @@ describe('NgTableParams', function () {
             expect(tp.isDataReloadRequired()).toBe(true);
         });
 
-        it('should return false when parameters "touched" but not modified', function(){
+        it('should return false when parameters "touched" but not modified', () => {
             // given
             tp.filter({ age: 1});
             tp.reload();
@@ -1091,28 +1101,28 @@ describe('NgTableParams', function () {
             expect(tp.isDataReloadRequired()).toBe(false);
         });
 
-        it('should return true when new settings dataset array supplied', function(){
+        it('should return true when new settings dataset array supplied', () => {
             // given
             tp.reload();
             scope.$digest();
 
-            verifyIsDataReloadRequired(function(){
+            verifyIsDataReloadRequired(() => {
                 tp.settings({ dataset: [11,22,33]});
             });
         });
 
-        it('should return true when existing settings dataset array is unset', function(){
+        it('should return true when existing settings dataset array is unset', () => {
             // given
             tp = createNgTableParams({ dataset: [1,2,3]});
             tp.reload();
             scope.$digest();
 
-            verifyIsDataReloadRequired(function(){
+            verifyIsDataReloadRequired(() => {
                 tp.settings({ dataset: null});
             });
         });
 
-        it('status should not change when settings called without a dataset array', function(){
+        it('status should not change when settings called without a dataset array', () => {
             // given
             tp = createNgTableParams({ dataset: [1,2,3]});
             tp.reload();
@@ -1124,7 +1134,7 @@ describe('NgTableParams', function () {
         });
 
 
-        function verifyIsDataReloadRequired(modifer){
+        function verifyIsDataReloadRequired(modifer: Function){
             modifer();
             expect(tp.isDataReloadRequired()).toBe(true);
             tp.reload();
@@ -1133,56 +1143,54 @@ describe('NgTableParams', function () {
         }
     });
 
-    describe('hasFilterChanges', function(){
-        var tp;
+    describe('hasFilterChanges', () => {
+        var tp: NgTableParams<{}>;
 
-        beforeEach(inject(function(){
+        beforeEach(inject(() => {
             tp = createNgTableParams();
         }));
 
-        it('should return true after construction', function(){
+        it('should return true after construction', () => {
             expect(tp.hasFilterChanges()).toBe(true);
         });
 
-        it('should return false once reload called after construction', function(){
+        it('should return false once reload called after construction', () => {
             tp.reload();
             // note: we don't have to wait for the getData promise to be resolved before considering reload
             // to be unnecessary - that's why we're not having to run a $digest
             expect(tp.hasFilterChanges()).toBe(false);
         });
 
-        it('should return true when getData fails', inject(function($q){
-            tp.settings({ getData: function(){
-                return $q.reject('bad response');
-            }});
+        it('should return true when getData fails', inject(($q: ng.IQService) => {
+            tp.settings({ getData: () => $q.reject('bad response')});
             tp.reload();
             scope.$digest();
             expect(tp.hasFilterChanges()).toBe(false);
         }));
 
-        it('should detect direct changes to filters', inject(function($q){
+        it('should detect direct changes to filters', inject(($q: ng.IQService) => {
             // given
             tp.reload();
             scope.$digest();
             expect(tp.hasFilterChanges()).toBe(false); // checking assumptions
 
             // when
-            tp.filter().newField = 99;
+            tp.filter()['newField'] = 99;
             expect(tp.hasFilterChanges()).toBe(true);
         }));
 
-        it('should return true when `$` field on `filter` changes', function(){
+        it('should return true when `$` field on `filter` changes', () => {
             // given
             tp.reload();
             scope.$digest();
             expect(tp.hasFilterChanges()).toBe(false); // checking assumptions
 
             // when
-            tp.filter().$ = 'cc';
+            tp.filter()['$'] = 'cc';
             expect(tp.hasFilterChanges()).toBe(true);
         });
 
-        it('should return true until changed filters have been reloaded', function(){
+        it('should return true until changed filters have been reloaded', () => {
             // given
             tp.reload();
             scope.$digest();
@@ -1195,7 +1203,7 @@ describe('NgTableParams', function () {
             expect(tp.hasFilterChanges()).toBe(false);
         });
 
-        it('should return false when filters "touched" but not modified', function(){
+        it('should return false when filters "touched" but not modified', () => {
             // given
             tp.filter({ age: 1});
             tp.reload();
@@ -1206,7 +1214,7 @@ describe('NgTableParams', function () {
             expect(tp.hasFilterChanges()).toBe(false);
         });
 
-        it('status should not change just because new settings dataset array supplied', function(){
+        it('status should not change just because new settings dataset array supplied', () => {
             // given
             tp.reload();
             scope.$digest();
@@ -1218,16 +1226,16 @@ describe('NgTableParams', function () {
 
     });
 
-    describe('hasErrorState', function(){
-        var tp;
+    describe('hasErrorState', () => {
+        var tp: NgTableParams<{}>;
 
-        it('should return false until reload fails', inject(function($q){
+        it('should return false until reload fails', inject(($q: ng.IQService) => {
             // given
-            tp = createNgTableParams({ getData: function(){
-                if (tp.settings().getData.calls.count() > 2){
+            tp = createNgTableParams({ getData: () => {
+                if ((tp.settings().getData as jasmine.Spy).calls.count() > 2){
                     return $q.reject('bad response');
                 }
-                return [1,2];
+                return $q.when([1,2]);
             }});
 
             // when, then
@@ -1242,11 +1250,9 @@ describe('NgTableParams', function () {
             expect(tp.hasErrorState()).toBe(true);
         }));
 
-        it('should return false once parameter values change', inject(function($q){
+        it('should return false once parameter values change', inject(($q: ng.IQService) => {
             // given
-            tp = createNgTableParams({ getData: function(){
-                return $q.reject('bad response');
-            }});
+            tp = createNgTableParams({ getData: () => $q.reject('bad response')});
 
             // when, then
             tp.reload();
@@ -1257,128 +1263,21 @@ describe('NgTableParams', function () {
         }));
     });
 
-    describe('backwards compatibility shim', function(){
+    describe('interceptors', () => {
 
-        it('shim should supply getData original arguments', inject(function(ngTableGetDataBcShim){
-            // given
-            var callCount = 0;
-            var adaptedFn = ngTableGetDataBcShim(originalGetDataFn);
-
-            // when
-            var tableParams = new NgTableParams({}, {});
-            adaptedFn(tableParams);
-
-            // then
-            expect(callCount).toBe(1);
-
-            function originalGetDataFn($defer, params){
-                callCount++;
-                expect($defer).toBeDefined();
-                expect($defer.resolve).toBeDefined();
-                expect(params).toBeDefined();
-                expect(params).toEqual(jasmine.any(NgTableParams));
-            }
-
-        }));
-
-        it('shim should return the getData "$defer" promise', inject(function(ngTableGetDataBcShim){
-            // given
-            var callCount = 0;
-            var adaptedFn = ngTableGetDataBcShim(originalGetDataFn);
-
-            // when
-            var tableParams = new NgTableParams({}, {});
-            var results = adaptedFn(tableParams);
-
-            // then
-            expect(results).toBeDefined();
-            expect(results.then).toBeDefined();
-            results.then(function(data){
-                expect(data.length).toBe(3);
-            });
-            scope.$digest();
-
-            function originalGetDataFn($defer/*, params*/){
-                $defer.resolve([1,2,3]);
-            }
-        }));
-
-        it('shim should return the data', inject(function(ngTableGetDataBcShim){
-            // given
-            var callCount = 0;
-            var adaptedFn = ngTableGetDataBcShim(originalGetDataFn);
-
-            // when
-            var tableParams = new NgTableParams({}, {});
-            var results = adaptedFn(tableParams);
-
-            // then
-            expect(results).toBeDefined();
-            expect(results).toEqual([1,2,3]);
-
-            function originalGetDataFn(/*$defer, params*/){
-                return [1,2,3];
-            }
-        }));
-
-        it('shim should be applied when getData function supplied has more than one parameter', function(){
-            // given
-            var tp = createNgTableParams({ getData: originalGetDataFn});
-
-            // when
-            var dataFetched = tp.reload();
-
-            // then
-            var actualData;
-            dataFetched.then(function(data){
-                actualData = data;
-            });
-            scope.$digest();
-            expect(actualData).toEqual([1,2,3]);
-
-            function originalGetDataFn($defer, params){
-                params.total(3);
-                $defer.resolve([1,2,3]);
-            }
-        });
-
-        it('shim should NOT be applied when getData has new signature', function(){
-            // given
-            var tp = createNgTableParams({ getData: newGetDataFn});
-
-            // when
-            var dataFetched = tp.reload();
-
-            // then
-            var actualData;
-            dataFetched.then(function(data){
-                actualData = data;
-            });
-            scope.$digest();
-            expect(actualData).toEqual([1,2,3]);
-
-            function newGetDataFn(params){
-                params.total(3);
-                return [1,2,3];
-            }
-        });
-    });
-
-    describe('interceptors', function(){
-
-        it('can register interceptor', function(){
+        it('can register interceptor', () => {
             var interceptor = { response: angular.identity };
             var tp = createNgTableParams({ interceptors: [interceptor]});
             expect(tp.settings().interceptors).toEqual([interceptor]);
         });
 
-        it('can register multiple interceptor', function(){
+        it('can register multiple interceptor', () => {
             var interceptors = [{ response: angular.identity }, { response: angular.identity }];
             var tp = createNgTableParams({ interceptors: interceptors});
             expect(tp.settings().interceptors).toEqual(interceptors);
         });
 
-        it('can register interceptors after NgTableParams created', function(){
+        it('can register interceptors after NgTableParams created', () => {
             var interceptor = { response: angular.identity };
             var interceptor2 = { response: angular.identity };
             var tp = createNgTableParams({ interceptors: [interceptor]});
@@ -1387,13 +1286,15 @@ describe('NgTableParams', function () {
             expect(tp.settings().interceptors).toEqual(interceptors);
         });
 
-        describe('one response interceptor', function(){
+        describe('one response interceptor', () => {
 
-            it('should receive response from call to getData', function(){
+            it('should receive response from call to getData', () => {
                 // given
                 var interceptor = {
-                    response: function(/*data, params*/){
+                    hasRun: false,
+                    response: function(data: number[]/*,params*/) {
                         this.hasRun = true;
+                        return data;
                     }
                 };
                 var tp = createNgTableParams({ interceptors: [interceptor]});
@@ -1406,23 +1307,23 @@ describe('NgTableParams', function () {
                 expect(interceptor.hasRun).toBeTruthy();
             });
 
-            it('should be able to modify data returned by getData', function(){
+            it('should be able to modify data returned by getData', () => {
+                type Row = {modified: boolean};
                 // given
                 var interceptor = {
-                    response: function(data/*, params*/){
-                        data.forEach(function(item){
+                    response: (data: Row[]/*, params*/) => {
+                        data.forEach(item => {
                             item.modified = true;
                         });
                         return data;
                     }
                 };
-                var tp = createNgTableParams({ interceptors: [interceptor], getData: function(){
-                    return [{}, {}];
-                }});
+                var tp = createNgTableParams<Row>({ interceptors: [interceptor], getData: () => [{}, {}]});
+                
 
                 // when
-                var actualData;
-                tp.reload().then(function(data){
+                var actualData: Row[];
+                tp.reload<Row>().then(data => {
                     actualData = data;
                 });
                 scope.$digest();
@@ -1431,22 +1332,16 @@ describe('NgTableParams', function () {
                 expect(actualData).toEqual([{ modified: true }, { modified: true }]);
             });
 
-            it('should be able to replace data returned by getData', function(){
+            it('should be able to replace data returned by getData', () => {
                 // given
                 var interceptor = {
-                    response: function(data/*, params*/){
-                        return data.map(function(item){
-                            return item * 2;
-                        });
-                    }
+                    response: (data: number[]/*, params*/) => data.map(item => item * 2)
                 };
-                var tp = createNgTableParams({ interceptors: [interceptor], getData: function(){
-                    return [2, 3];
-                }});
+                var tp = createNgTableParams({ interceptors: [interceptor], getData: () => [2, 3]});
 
                 // when
-                var actualData;
-                tp.reload().then(function(data){
+                var actualData: number[];
+                tp.reload<number>().then(data => {
                     actualData = data;
                 });
                 scope.$digest();
@@ -1455,21 +1350,22 @@ describe('NgTableParams', function () {
                 expect(actualData).toEqual([4, 6]);
             });
 
-            it('should be able to access tableParams supplied to getData', function(){
+            it('should be able to access tableParams supplied to getData', () => {
+                type QueryResult = { total: number, results: number[] };
                 // given
                 var interceptor = {
-                    response: function(data, params){
+                    response: (data: QueryResult, params: NgTableParams<number>) => {
                         params.total(data.total);
                         return data.results;
                     }
                 };
-                var tp = createNgTableParams({ interceptors: [interceptor], getData: function(){
-                    return { results: [1,2,3], total: 3};
+                var tp = createNgTableParams({}, { interceptors: [interceptor], getData: () => {
+                    return { results: [1,2,3], total: 3}; 
                 }});
 
                 // when
-                var actualData;
-                tp.reload().then(function(data){
+                var actualData: number[];
+                tp.reload<number>().then(data => {
                     actualData = data;
                 });
                 scope.$digest();
@@ -1480,20 +1376,19 @@ describe('NgTableParams', function () {
             });
         });
 
-        describe('one responseError interceptor', function(){
+        describe('one responseError interceptor', () => {
 
-            it('should receive rejections from getData', inject(function($q){
+            it('should receive rejections from getData', inject(($q: ng.IQService) => {
                 // given
                 var interceptor = {
-                    responseError: function(reason/*, params*/){
+                    actualReason: '',
+                    responseError: function(reason: string/*, params*/) {
                         this.actualReason = reason;
                     }
                 };
                 var tp = createNgTableParams({
                     interceptors: [interceptor],
-                    getData: function(/*params*/){
-                        return $q.reject('BANG!');
-                    }
+                    getData: (/*params*/) => $q.reject('BANG!')
                 });
 
                 // when
@@ -1504,16 +1399,17 @@ describe('NgTableParams', function () {
                 expect(interceptor.actualReason).toBe('BANG!');
             }));
 
-            it('should NOT receive errors from getData', function(){
+            it('should NOT receive errors from getData', () => {
                 // given
                 var interceptor = {
-                    responseError: function(/*reason, params*/){
+                    hasRun: false,
+                    responseError: function(/*reason, params*/) {
                         this.hasRun = true;
                     }
                 };
                 var tp = createNgTableParams({
                     interceptors: [interceptor],
-                    getData: function(/*params*/){
+                    getData: (/*params*/) => {
                         throw new Error('BANG!');
                     }
                 });
@@ -1523,24 +1419,27 @@ describe('NgTableParams', function () {
                 expect(interceptor.hasRun).toBeFalsy();
             });
 
-            it('should be able to modify reason returned by getData', inject(function($q){
+            it('should be able to modify reason returned by getData', inject(($q: ng.IQService) => {
+                interface IResponseError {
+                    description: string;
+                    code?: number;
+                }
+                
                 // given
                 var interceptor = {
-                    responseError: function(reason/*, params*/){
+                    responseError: (reason: IResponseError/*, params*/) => {
                         reason.code = 400;
                         return $q.reject(reason);
                     }
                 };
                 var tp = createNgTableParams({
                     interceptors: [interceptor],
-                    getData: function(/*params*/){
-                        return $q.reject({ description: 'crappy data'});
-                    }
+                    getData: (/*params*/) => $q.reject({ description: 'crappy data'})
                 });
 
                 // when
-                var actualReason;
-                tp.reload().catch(function(reason){
+                var actualReason: IResponseError;
+                tp.reload().catch(reason => {
                     actualReason = reason;
                 });
                 scope.$digest();
@@ -1550,23 +1449,19 @@ describe('NgTableParams', function () {
                 expect(actualReason.description).toBe('crappy data');
             }));
 
-            it('should be able to replace reason returned by getData', inject(function($q){
+            it('should be able to replace reason returned by getData', inject(($q: ng.IQService) => {
                 // given
                 var interceptor = {
-                    responseError: function(/*reason, params*/){
-                        return $q.reject('Cancelled by user');
-                    }
+                    responseError: (/*reason, params*/) => $q.reject('Cancelled by user')
                 };
                 var tp = createNgTableParams({
                     interceptors: [interceptor],
-                    getData: function(/*params*/){
-                        return $q.reject('BANG!');
-                    }
+                    getData: (/*params*/) => $q.reject('BANG!')
                 });
 
                 // when
-                var actualReason;
-                tp.reload().catch(function(reason){
+                var actualReason: string;
+                tp.reload().catch(reason => {
                     actualReason = reason;
                 });
                 scope.$digest();
@@ -1575,17 +1470,17 @@ describe('NgTableParams', function () {
                 expect(actualReason).toBe('Cancelled by user');
             }));
 
-            it('should be able to access tableParams supplied to getData', function(){
+            it('should be able to access tableParams supplied to getData', () => {
                 // given
                 var interceptor = {
-                    response: function(reason, params){
+                    actualParams: null as NgTableParams<number>,
+                    response: function (data: number[], params: NgTableParams<number>) {
                         this.actualParams = params;
                     }
                 };
                 var tp = createNgTableParams({ interceptors: [interceptor]});
 
                 // when
-                var actualData;
                 tp.reload();
                 scope.$digest();
 
@@ -1594,23 +1489,20 @@ describe('NgTableParams', function () {
             });
         });
 
-        describe('one response plus responseError interceptor', function(){
+        describe('one response plus responseError interceptor', () => {
 
-            it('should NOT call responseError on same interceptor whose response method fails', inject(function($q){
+            it('should NOT call responseError on same interceptor whose response method fails', inject(($q: ng.IQService) => {
                 // given
                 var interceptor = {
-                    response: function(/*data, params*/){
-                        return $q.reject('BANG!');
-                    },
-                    responseError: function(reason/*, params*/){
+                    hasRun: false,
+                    response: (/*data, params*/) => $q.reject('BANG!'),
+                    responseError: function(reason: any/*, params*/) {
                         this.hasRun = true;
                     }
                 };
                 var tp = createNgTableParams({
                     interceptors: [interceptor],
-                    getData: function(/*params*/){
-                        return [1,2,3];
-                    }
+                    getData: (/*params*/) => [1,2,3]
                 });
 
                 // when
@@ -1622,13 +1514,14 @@ describe('NgTableParams', function () {
             }));
         });
 
-        describe('multiple response interceptors', function(){
+        describe('multiple response interceptors', () => {
 
-            it('should run interceptors in the order they were registered', function(){
+            it('should run interceptors in the order they were registered', () => {
                 // given
                 var callCount = 0;
                 var interceptor = {
-                    response: function(/*data, params*/){
+                    sequence: 0,
+                    response: function(/*data, params*/) {
                         this.sequence = callCount;
                         callCount++;
                     }
@@ -1645,29 +1538,19 @@ describe('NgTableParams', function () {
                 expect(interceptors[1].sequence).toBe(1);
             });
 
-            it('results of one interceptor should be piped to the next validator', function(){
+            it('results of one interceptor should be piped to the next validator', () => {
                 // given
                 var interceptor = {
-                    response: function(data/*, params*/){
-                        return data.map(function(item){
-                            return item * 2;
-                        });
-                    }
+                    response: (data: number[]/*, params*/) => data.map(item => item * 2)
                 };
                 var interceptor2 = {
-                    response: function(data/*, params*/){
-                        return data.map(function(item){
-                            return item.toString() + '0';
-                        });
-                    }
+                    response: (data: number[]/*, params*/) => data.map(item => item.toString() + '0')
                 };
-                var tp = createNgTableParams({ interceptors: [interceptor, interceptor2], getData: function(){
-                    return [2, 3];
-                }});
+                var tp = createNgTableParams({ interceptors: [interceptor, interceptor2], getData: () => [2, 3]});
 
                 // when
-                var actualData;
-                tp.reload().then(function(data){
+                var actualData: string[];
+                tp.reload().then((data: any) => {
                     actualData = data;
                 });
                 scope.$digest();
@@ -1677,17 +1560,16 @@ describe('NgTableParams', function () {
             });
         });
 
-        describe('multiple response and responseError interceptors', function(){
+        describe('multiple response and responseError interceptors', () => {
 
-            it('responseError of next interceptor should receive failures from previous interceptor', inject(function($q){
+            it('responseError of next interceptor should receive failures from previous interceptor', inject(($q: ng.IQService) => {
                 // given
                 var badInterceptor = {
-                    response: function(/*data, params*/){
-                        return $q.reject('BANG!');
-                    }
+                    response: (/*data, params*/) => $q.reject('BANG!')
                 };
                 var nextInterceptor = {
-                    responseError: function(/*reason, params*/){
+                    hasRun: false,
+                    responseError: function(/*reason, params*/) {
                         this.hasRun = true;
                     }
                 };
@@ -1701,21 +1583,18 @@ describe('NgTableParams', function () {
                 expect(nextInterceptor.hasRun).toBe(true);
             }));
 
-            it('should call next response interceptor when previous interceptor recovers from failure', inject(function($q){
+            it('should call next response interceptor when previous interceptor recovers from failure', inject(($q: ng.IQService) => {
                 // given
                 var badInterceptor = {
-                    response: function(/*data, params*/){
-                        return $q.reject('BANG!');
-                    }
+                    response: (/*data, params*/) => $q.reject('BANG!')
                 };
                 var recoveringInterceptor = {
-                    responseError: function(/*reason, params*/){
-                        return [8894,58];
-                    }
+                    responseError: (/*reason, params*/) => [8894,58]
                 };
-                var recoveredData;
+                var recoveredData: number[];
                 var nextInterceptor = {
-                    response: function(data/*, params*/){
+                    hasRun: false,
+                    response: function (data: number[]/*, params*/) {
                         this.hasRun = true;
                         recoveredData = data;
                     }
@@ -1733,50 +1612,48 @@ describe('NgTableParams', function () {
         });
     });
 
-    describe('events', function(){
+    describe('events', () => {
 
-        var actualEventArgs,
-            actualPublisher,
-            fakeTableParams,
-            ngTableEventsChannel;
+        var actualEventArgs: any[],
+            actualPublisher: NgTableParams<any>,
+            fakeTableParams: NgTable.InternalTableParams<any>,
+            ngTableEventsChannel: NgTable.Events.IEventsChannel & {[name: string] : Function};
 
-        beforeEach(inject(function(_ngTableEventsChannel_){
+        beforeEach(inject((_ngTableEventsChannel_: NgTable.Events.IEventsChannel & {[name: string] : Function}) => {
             ngTableEventsChannel = _ngTableEventsChannel_;
-            fakeTableParams = {};
+            fakeTableParams = {} as any;
             actualPublisher = undefined;
             actualEventArgs = undefined;
         }));
 
         function getSubscriberCount(){
             var allEventNames = Object.keys($rootScope.$$listenerCount);
-            var ngTableEvents = allEventNames.filter(function(event){
-                return event.indexOf('ngTable:') === 0;
-            });
-            return ngTableEvents.reduce(function(result, event){
+            var ngTableEvents = allEventNames.filter(event => event.indexOf('ngTable:') === 0);
+            return ngTableEvents.reduce((result, event) => {
                 result += $rootScope.$$listenerCount[event];
                 return result;
             }, 0);
         }
 
-        describe('general pub/sub mechanics', function(){
+        describe('general pub/sub mechanics', () => {
 
             var supportedEvents = ['DatasetChanged', 'AfterReloadData', 'PagesChanged', 'AfterCreated'];
 
-            it('should be safe to publish event when no subscribers', function () {
+            it('should be safe to publish event when no subscribers', () => {
 
-                function test(event) {
+                function test(event: string) {
                     ngTableEventsChannel['publish' + event](fakeTableParams);
                 }
 
                 supportedEvents.forEach(test);
             });
 
-            it('publishing event should notify registered subscribers (one)', function(){
+            it('publishing event should notify registered subscribers (one)', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
                     var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function(){
+                    ngTableEventsChannel['on' + event](() => {
                         cbCount++;
                     });
 
@@ -1790,16 +1667,16 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('publishing event should notify registered subscribers (multiple)', function(){
+            it('publishing event should notify registered subscribers (multiple)', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
                     var cb1Count = 0;
-                    ngTableEventsChannel['on' + event](function(){
+                    ngTableEventsChannel['on' + event](() => {
                         cb1Count++;
                     });
                     var cb2Count = 0;
-                    ngTableEventsChannel['on' + event](function(){
+                    ngTableEventsChannel['on' + event](() => {
                         cb2Count++;
                     });
 
@@ -1814,12 +1691,12 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('subscriber should be able to unregister their callback', function(){
+            it('subscriber should be able to unregister their callback', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
                     var cbCount = 0;
-                    var subscription = ngTableEventsChannel['on' + event](function(){
+                    var subscription = ngTableEventsChannel['on' + event](() => {
                         cbCount++;
                     });
                     ngTableEventsChannel['publish' + event](fakeTableParams);
@@ -1839,15 +1716,15 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('subscriber should be able specify the scope to receive events', function(){
+            it('subscriber should be able specify the scope to receive events', () => {
 
                 // this is useful as it allows all subscriptions to be removed by calling $destroy on that scope
 
-                function test(event){
+                function test(event: string){
                     // given
                     var childScope = $rootScope.$new();
                     var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function(){
+                    ngTableEventsChannel['on' + event](() => {
                         cbCount++;
                     }, childScope);
 
@@ -1868,14 +1745,14 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('should not notify subscribers who have filter out the publisher', function(){
+            it('should not notify subscribers who have filter out the publisher', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
                     var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function(){
+                    ngTableEventsChannel['on' + event](() => {
                         cbCount++;
-                    }, function(publisher){
+                    }, function(publisher: {}){
                         return publisher === fakeTableParams;
                     });
 
@@ -1891,14 +1768,14 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('should not notify subscribers who have filter not to receive event based on arg values', function(){
+            it('should not notify subscribers who have filter not to receive event based on arg values', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
                     var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function(){
+                    ngTableEventsChannel['on' + event](() => {
                         cbCount++;
-                    }, function(publisher, arg1){
+                    }, (publisher: {}, arg1: any) => {
                         return arg1 === 1;
                     });
 
@@ -1913,12 +1790,12 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('should support a shorthand for subscribers to receive events from specific NgTableParams instance', function () {
+            it('should support a shorthand for subscribers to receive events from specific NgTableParams instance', () => {
 
-                function test(event) {
+                function test(event: string) {
                     // given
                     var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function () {
+                    ngTableEventsChannel['on' + event](() => {
                         cbCount++;
                     }, fakeTableParams);
 
@@ -1934,12 +1811,11 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('publisher should be supplied to subscriber callback', function(){
+            it('publisher should be supplied to subscriber callback', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
-                    var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function(params){
+                    ngTableEventsChannel['on' + event](function(params: NgTableParams<any>){
                         actualPublisher = params;
                     });
 
@@ -1953,13 +1829,13 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('remaining event args should be supplied to subscriber callback', function(){
+            it('remaining event args should be supplied to subscriber callback', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
-                    ngTableEventsChannel['on' + event](function(params/*, ...args*/){
+                    ngTableEventsChannel['on' + event](function(params: NgTableParams<any>, ...args: any[]){
                         actualPublisher = params;
-                        actualEventArgs = _.rest(arguments);
+                        actualEventArgs = args;
                     });
 
                     // when
@@ -1974,12 +1850,12 @@ describe('NgTableParams', function () {
                 supportedEvents.forEach(test);
             });
 
-            it('subscribers should never receive events from null instance of tableParams', function(){
+            it('subscribers should never receive events from null instance of tableParams', () => {
 
-                function test(event){
+                function test(event: string){
                     // given
                     var cbCount = 0;
-                    ngTableEventsChannel['on' + event](function(params/*, ...args*/){
+                    ngTableEventsChannel['on' + event](function(params: {}/*, ...args*/){
                         cbCount++;
                     });
 
@@ -1996,11 +1872,11 @@ describe('NgTableParams', function () {
 
         });
 
-        describe('afterCreated', function(){
+        describe('afterCreated', () => {
 
-            it('should fire when a new NgTableParams has been constructed', function(){
+            it('should fire when a new NgTableParams has been constructed', () => {
                 // given
-                ngTableEventsChannel.onAfterCreated(function(params){
+                ngTableEventsChannel.onAfterCreated(params => {
                     actualPublisher = params;
                 });
 
@@ -2012,18 +1888,16 @@ describe('NgTableParams', function () {
             });
         });
 
-        describe('afterReloadData', function(){
+        describe('afterReloadData', () => {
 
-            it('should fire when a reload completes', function(){
+            it('should fire when a reload completes', () => {
                 // given
-                ngTableEventsChannel.onAfterReloadData(function(params, newVal, oldVal){
+                ngTableEventsChannel.onAfterReloadData((params, newVal, oldVal) => {
                     actualPublisher = params;
                     actualEventArgs = [newVal, oldVal];
                 });
                 var newDatapage = [1, 5, 6];
-                var params = createNgTableParams({ getData: function(){
-                    return newDatapage;
-                }});
+                var params = createNgTableParams({ getData: () => newDatapage});
 
                 // when
                 params.reload();
@@ -2034,16 +1908,14 @@ describe('NgTableParams', function () {
                 expect(actualEventArgs).toEqual([newDatapage, []]);
             });
 
-            it('should fire on reload even if datapage remains the same array', function(){
+            it('should fire on reload even if datapage remains the same array', () => {
                 // given
                 var callCount = 0;
-                ngTableEventsChannel.onAfterReloadData(function(/*params, newVal, oldVal*/){
+                ngTableEventsChannel.onAfterReloadData((/*params, newVal, oldVal*/) => {
                     callCount++;
                 });
                 var dataPage = [1,2,3];
-                var params = createNgTableParams({ getData: function(){
-                    return dataPage;
-                }});
+                var params = createNgTableParams({ getData: () => dataPage});
 
                 // when
                 params.reload();
@@ -2055,13 +1927,13 @@ describe('NgTableParams', function () {
                 expect(callCount).toBe(2);
             });
 
-            it('should fire after afterCreated event', function(){
+            it('should fire after afterCreated event', () => {
                 // given
-                var events = [];
-                ngTableEventsChannel.onAfterReloadData(function(/*params, newVal, oldVal*/){
+                var events: string[] = [];
+                ngTableEventsChannel.onAfterReloadData((/*params, newVal, oldVal*/) => {
                     events.push('afterReloadData');
                 });
-                ngTableEventsChannel.onAfterCreated(function(/*params*/){
+                ngTableEventsChannel.onAfterCreated((/*params*/) => {
                     events.push('afterCreated');
                 });
 
@@ -2077,11 +1949,11 @@ describe('NgTableParams', function () {
 
         });
 
-        describe('pagesChanged', function(){
+        describe('pagesChanged', () => {
 
-            it('should fire when a reload completes', function(){
+            it('should fire when a reload completes', () => {
                 // given
-                ngTableEventsChannel.onPagesChanged(function(params, newVal, oldVal){
+                ngTableEventsChannel.onPagesChanged((params, newVal, oldVal) => {
                     actualPublisher = params;
                     actualEventArgs = [newVal, oldVal];
                 });
@@ -2097,9 +1969,9 @@ describe('NgTableParams', function () {
                 expect(actualEventArgs).toEqual([expectedPages, undefined]);
             });
 
-            it('should fire when a reload completes - no data', function(){
+            it('should fire when a reload completes - no data', () => {
                 // given
-                ngTableEventsChannel.onPagesChanged(function(params, newVal, oldVal){
+                ngTableEventsChannel.onPagesChanged((params, newVal, oldVal) => {
                     actualPublisher = params;
                     actualEventArgs = [newVal, oldVal];
                 });
@@ -2113,10 +1985,10 @@ describe('NgTableParams', function () {
                 expect(actualEventArgs).toEqual([[], undefined]);
             });
 
-            it('should fire when a reload completes (multiple)', function(){
+            it('should fire when a reload completes (multiple)', () => {
                 // given
                 var callCount = 0;
-                ngTableEventsChannel.onPagesChanged(function(/*params, newVal, oldVal*/){
+                ngTableEventsChannel.onPagesChanged((/*params, newVal, oldVal*/) => {
                     callCount++;
                 });
                 var params = createNgTableParams({ count: 5 }, { counts: [5,10], dataset: [1,2,3,4,5,6]});
@@ -2132,10 +2004,10 @@ describe('NgTableParams', function () {
                 expect(callCount).toBe(2);
             });
 
-            it('should not fire on reload when pages remain the same', function(){
+            it('should not fire on reload when pages remain the same', () => {
                 // given
                 var callCount = 0;
-                ngTableEventsChannel.onPagesChanged(function(/*params, newVal, oldVal*/){
+                ngTableEventsChannel.onPagesChanged((/*params, newVal, oldVal*/) => {
                     callCount++;
                 });
                 var params = createNgTableParams({ count: 5 }, { counts: [5,10], dataset: [1,2,3,4,5,6]});
@@ -2150,13 +2022,13 @@ describe('NgTableParams', function () {
                 expect(callCount).toBe(1);
             });
 
-            it('should fire after afterCreated event', function(){
+            it('should fire after afterCreated event', () => {
                 // given
-                var events = [];
-                ngTableEventsChannel.onPagesChanged(function(/*params, newVal, oldVal*/){
+                var events: string[] = [];
+                ngTableEventsChannel.onPagesChanged((/*params, newVal, oldVal*/) => {
                     events.push('pagesChanged');
                 });
-                ngTableEventsChannel.onAfterCreated(function(/*params*/){
+                ngTableEventsChannel.onAfterCreated((/*params*/) => {
                     events.push('afterCreated');
                 });
 
@@ -2171,11 +2043,11 @@ describe('NgTableParams', function () {
             });
         });
 
-        describe('datasetChanged', function(){
+        describe('datasetChanged', () => {
 
-            it('should fire when a initial dataset is supplied as a settings value', function(){
+            it('should fire when a initial dataset is supplied as a settings value', () => {
                 // given
-                ngTableEventsChannel.onDatasetChanged(function(params, newVal, oldVal){
+                ngTableEventsChannel.onDatasetChanged((params, newVal, oldVal) => {
                     actualPublisher = params;
                     actualEventArgs = [newVal, oldVal];
                 });
@@ -2189,10 +2061,10 @@ describe('NgTableParams', function () {
                 expect(actualEventArgs).toEqual([initialDs, null]);
             });
 
-            it('should fire when a new dataset is supplied as a settings value', function(){
+            it('should fire when a new dataset is supplied as a settings value', () => {
                 // given
                 var initialDs = [1, 2];
-                ngTableEventsChannel.onDatasetChanged(function(params, newVal, oldVal){
+                ngTableEventsChannel.onDatasetChanged((params, newVal, oldVal) => {
                     actualPublisher = params;
                     actualEventArgs = [newVal, oldVal];
                 });
@@ -2207,17 +2079,17 @@ describe('NgTableParams', function () {
                 expect(actualEventArgs).toEqual([newDs, initialDs]);
             });
 
-            it('should fire when a dataset is removed from settings value', function(){
+            it('should fire when a dataset is removed from settings value', () => {
                 // given
                 var initialDs = [1, 2];
-                ngTableEventsChannel.onDatasetChanged(function(params, newVal, oldVal){
+                ngTableEventsChannel.onDatasetChanged((params, newVal, oldVal) => {
                     actualPublisher = params;
                     actualEventArgs = [newVal, oldVal];
                 });
                 var params = createNgTableParams({ dataset: initialDs});
 
                 // when
-                var newDs = null;
+                var newDs: number[] = null;
                 params.settings({ dataset: newDs});
 
                 // then
@@ -2225,11 +2097,11 @@ describe('NgTableParams', function () {
                 expect(actualEventArgs).toEqual([newDs, initialDs]);
             });
 
-            it('should NOT fire when the same dataset array is supplied as a new settings value', function(){
+            it('should NOT fire when the same dataset array is supplied as a new settings value', () => {
                 // given
                 var callCount = 0;
                 var initialDs = [1, 2];
-                ngTableEventsChannel.onDatasetChanged(function(/*params, newVal, oldVal*/){
+                ngTableEventsChannel.onDatasetChanged((/*params, newVal, oldVal*/) => {
                     callCount++;
                 });
                 var params = createNgTableParams({ dataset: initialDs});
@@ -2241,29 +2113,29 @@ describe('NgTableParams', function () {
                 expect(callCount).toBe(1);
             });
 
-            it('settings().dataset on publisher should reference the new dataset', function(){
+            it('settings().dataset on publisher should reference the new dataset', () => {
                 var initialDs = [1, 2];
                 var newDs = [1, 2, 3];
                 var params = createNgTableParams({ dataset: initialDs});
-                ngTableEventsChannel.onDatasetChanged(function(params, newVal/*, oldVal*/){
+                ngTableEventsChannel.onDatasetChanged((params, newVal/*, oldVal*/) => {
                     expect(params.settings().dataset).toBe(newVal);
                 });
                 params.settings({ dataset: newDs});
             });
 
-            it('should fire after afterCreated event', function(){
+            it('should fire after afterCreated event', () => {
                 // given
-                var events = [];
+                var events: string[] = [];
                 var initialDs = [1, 2];
-                ngTableEventsChannel.onDatasetChanged(function(/*params, newVal, oldVal*/){
+                ngTableEventsChannel.onDatasetChanged((/*params, newVal, oldVal*/) => {
                     events.push('datasetChanged');
                 });
-                ngTableEventsChannel.onAfterCreated(function(/*params*/){
+                ngTableEventsChannel.onAfterCreated((/*params*/) => {
                     events.push('afterCreated');
                 });
 
                 // when
-                var params = createNgTableParams({ dataset: initialDs});
+                createNgTableParams({ dataset: initialDs});
 
                 // then
                 expect(events[0]).toEqual('afterCreated');

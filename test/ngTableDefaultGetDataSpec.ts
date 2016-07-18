@@ -1,44 +1,50 @@
-describe('ngTableDefaultGetData', function () {
+describe('ngTableDefaultGetData', () => {
 
-    describe('provider', function () {
-        var ngTableDefaultGetDataProvider;
+    interface IPerson {
+        age: number;
+    }
 
-        beforeEach(module("ngTable"));
-        beforeEach(function(){
-            module(function(_ngTableDefaultGetDataProvider_){
+    describe('provider', () => {
+        let ngTableDefaultGetDataProvider: NgTable.Data.IDefaultGetDataProvider;
+
+        beforeEach(angular.mock.module("ngTable"));
+        beforeEach(() => {
+            angular.mock.module((_ngTableDefaultGetDataProvider_: NgTable.Data.IDefaultGetDataProvider) => {
                 ngTableDefaultGetDataProvider=_ngTableDefaultGetDataProvider_;
             });
         });
         beforeEach(inject());
 
-        it('should be configured to use built-in angular filters', function () {
+        it('should be configured to use built-in angular filters', () => {
             expect(ngTableDefaultGetDataProvider.filterFilterName).toBe('filter');
             expect(ngTableDefaultGetDataProvider.sortingFilterName).toBe('orderBy');
         });
     });
 
-    describe('service', function () {
-        var ngTableDefaultGetData,
-            tableParams;
+    describe('service', () => {
+        let ngTableDefaultGetData : NgTable.Data.IDefaultGetData<any>,
+            tableParams: NgTableParams<any>;
 
-        beforeEach(module('ngTable'));
+        beforeEach(angular.mock.module('ngTable'));
 
-        beforeEach(inject(function (_ngTableDefaultGetData_, NgTableParams) {
+        beforeEach(inject((
+            _ngTableDefaultGetData_: NgTable.Data.IDefaultGetData<any>, 
+            NgTableParams: NgTable.ITableParamsConstructor<any>) => {
             ngTableDefaultGetData = _ngTableDefaultGetData_;
-            tableParams = new NgTableParams({count: 10}, {counts: [10]});
+            tableParams = new NgTableParams({ count: 10 }, {counts: [10]});
         }));
 
-        describe('sorting', function () {
-            it('empty sorting', function () {
+        describe('sorting', () => {
+            it('empty sorting', () => {
                 // given
-                tableParams.sorting({});
+                tableParams.sorting();
                 // when
                 var actualResults = ngTableDefaultGetData([{age: 1}, {age: 2}, {age: 3}], tableParams);
                 // then
                 expect(actualResults).toEqual([{age: 1}, {age: 2}, {age: 3}]);
             });
 
-            it('single property sort ascending', function () {
+            it('single property sort ascending', () => {
                 // given
                 tableParams.sorting({age: 'asc'});
                 // when
@@ -47,7 +53,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 1}, {age: 2}, {age: 3}]);
             });
 
-            it('single property sort descending', function () {
+            it('single property sort descending', () => {
                 // given
                 tableParams.sorting({age: 'desc'});
                 // when
@@ -56,7 +62,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 3}, {age: 2}, {age: 1}]);
             });
 
-            it('multiple property sort ascending', function () {
+            it('multiple property sort ascending', () => {
                 // given
                 tableParams.sorting({age: 'asc', name: 'asc'});
                 // when
@@ -73,8 +79,8 @@ describe('ngTableDefaultGetData', function () {
 
         });
 
-        describe('filters', function () {
-            it('empty filter', function () {
+        describe('filters', () => {
+            it('empty filter', () => {
                 // given
                 tableParams.filter({});
                 // when
@@ -83,7 +89,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 1}, {age: 2}, {age: 3}]);
             });
 
-            it('empty filter - simple values', function () {
+            it('empty filter - simple values', () => {
                 // given
                 tableParams.filter({});
                 // when
@@ -92,7 +98,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([1, 2, 3]);
             });
 
-            it('single property filter', function () {
+            it('single property filter', () => {
                 // given
                 tableParams.filter({age: 1});
                 // when
@@ -101,7 +107,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 1}]);
             });
 
-            it('multiple property filter', function () {
+            it('multiple property filter', () => {
                 // given
                 var data = [{age: 1, name: 'A'}, {age: 2, name: 'B'}, {age: 3, name: 'B'}];
                 tableParams.filter({age: 2, name: 'B'});
@@ -111,7 +117,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 2, name: 'B'}]);
             });
 
-            it('should remove null and undefined values before applying', function () {
+            it('should remove null and undefined values before applying', () => {
                 // given
                 var data = [{age: 1, name: 'A'}, {age: 2, name: 'B'}, {age: 3, name: 'B'}];
                 tableParams.filter({age: null, name: 'B'});
@@ -121,7 +127,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 2, name: 'B'}, {age: 3, name: 'B'}]);
             });
 
-            it('should remove empty string value before applying', function () {
+            it('should remove empty string value before applying', () => {
                 // given
                 var data = [{age: 1, name: 'A'}, {age: 2, name: 'B'}, {age: 3, name: 'B'}];
                 tableParams.filter({age: 2, name: ''});
@@ -131,7 +137,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{age: 2, name: 'B'}]);
             });
 
-            it('single nested property, one level deep', function () {
+            it('single nested property, one level deep', () => {
                 // given
                 tableParams.filter({'details.age': 1});
                 // when
@@ -149,7 +155,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{details: {age: 1}}]);
             });
 
-            it('single nested property, two levels deep', function () {
+            it('single nested property, two levels deep', () => {
                 // given
                 tableParams.filter({'details.personal.age': 1});
                 // when
@@ -167,7 +173,7 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual([{details: {personal: {age: 1}}}]);
             });
 
-            it('multiple nested property, two levels deep', function () {
+            it('multiple nested property, two levels deep', () => {
                 // given
                 tableParams.filter({'details.personal.age': 1, 'job.money': 100});
                 // when
@@ -190,13 +196,11 @@ describe('ngTableDefaultGetData', function () {
                 expect(actualResults).toEqual(expected);
             });
 
-            describe('filterComparator', function(){
+            describe('filterComparator', () => {
 
-                it('function', function () {
+                it('function', () => {
                     // given
-                    var comparer = function (actual, expected) {
-                        return angular.equals(actual, expected);
-                    };
+                    var comparer = (actual: any, expected: any) => angular.equals(actual, expected);
                     tableParams.settings({ filterOptions: { filterComparator: comparer }});
                     tableParams.filter({age: 1});
                     // when
@@ -205,7 +209,7 @@ describe('ngTableDefaultGetData', function () {
                     expect(actualResults).toEqual([{age: 1}]);
                 });
 
-                it('"true"', function () {
+                it('"true"', () => {
                     // given
                     tableParams.settings({ filterOptions: { filterComparator: true }});
                     tableParams.filter({age: 1});
@@ -215,7 +219,7 @@ describe('ngTableDefaultGetData', function () {
                     expect(actualResults).toEqual([{age: 1}]);
                 });
 
-                it('"false"', function () {
+                it('"false"', () => {
                     // given
                     tableParams.settings({ filterOptions: { filterComparator: false }});
                     tableParams.filter({age: 1});
@@ -225,7 +229,7 @@ describe('ngTableDefaultGetData', function () {
                     expect(actualResults).toEqual([{age: 10}, {age: 1}, {age: 101}]);
                 });
 
-                it('"undefined" (the default)', function () {
+                it('"undefined" (the default)', () => {
                     // given
                     tableParams.settings({ filterOptions: { filterComparator: undefined }});
                     tableParams.filter({age: 1});
@@ -238,12 +242,15 @@ describe('ngTableDefaultGetData', function () {
         });
     });
 
-    describe('service, custom filters', function () {
-        var ngTableDefaultGetData, tableParams;
+    describe('service, custom filters', () => {
+        var ngTableDefaultGetData: NgTable.Data.IDefaultGetData<IPerson>, 
+            tableParams: NgTableParams<IPerson>;
+            
+        type PersonCriteria = { ages: number[]};
 
-        beforeEach(function () {
+        beforeEach(() => {
             // add a custom filter available to our tests
-            module('ngTable', function($provide){
+            angular.mock.module('ngTable', ($provide: ng.auto.IProvideService) => {
                 $provide.factory('myCustomFilterFilter', myCustomFilter)
             });
 
@@ -252,20 +259,20 @@ describe('ngTableDefaultGetData', function () {
 
                 return jasmine.createSpy('myCustomFilterSpy',filter).and.callThrough();
 
-                function filter(people, criteriaObj/*, comparator*/) {
-                    return people.filter(function (p) {
-                        return criteriaObj.ages.indexOf(p.age) !== -1;
-                    });
+                function filter(people: IPerson[], criteriaObj: PersonCriteria/*, comparator*/) {
+                    return people.filter(p => criteriaObj.ages.indexOf(p.age) !== -1);
                 }
             }
         });
 
-        beforeEach(inject(function (_ngTableDefaultGetData_, NgTableParams) {
+        beforeEach(inject((
+            _ngTableDefaultGetData_: NgTable.Data.IDefaultGetData<IPerson>, 
+            NgTableParams: NgTable.ITableParamsConstructor<IPerson>) => {
             ngTableDefaultGetData = _ngTableDefaultGetData_;
             tableParams = new NgTableParams({count: 10}, {counts: [10]});
         }));
 
-        it('filterFilterName override', function () {
+        it('filterFilterName override', () => {
             // given
             tableParams.settings({ filterOptions: {filterFilterName: 'myCustomFilter'}});
             tableParams.filter({ages: [1, 2]});
@@ -275,7 +282,7 @@ describe('ngTableDefaultGetData', function () {
             expect(actualResults).toEqual([{age: 1}, {age: 2}]);
         });
 
-        it('`this` context of custom filter should be set to the NgTableParams instance', inject(function (myCustomFilterFilter) {
+        it('`this` context of custom filter should be set to the NgTableParams instance', inject((myCustomFilterFilter: jasmine.Spy) => {
             // given
             tableParams.settings({ filterOptions: {filterFilterName: 'myCustomFilter'}});
             tableParams.filter({ages: [1, 2]});
@@ -285,12 +292,10 @@ describe('ngTableDefaultGetData', function () {
             expect(myCustomFilterFilter.calls.mostRecent().object).toBe(tableParams);
         }));
 
-        it('custom filter function', function () {
+        it('custom filter function', () => {
             // given
-            var filterFn = function (data, criteriaObj/*, comparator*/) {
-                return data.filter(function (p) {
-                    return criteriaObj.ages.indexOf(p.age) !== -1;
-                });
+            var filterFn = (data: IPerson[], criteriaObj: PersonCriteria/*, comparator*/) => {
+                return data.filter(p => criteriaObj.ages.indexOf(p.age) !== -1);
             };
             tableParams.settings({ filterOptions: { filterFn: filterFn }});
             tableParams.filter({ages: [1, 2]});
@@ -300,7 +305,7 @@ describe('ngTableDefaultGetData', function () {
             expect(actualResults).toEqual([{age: 1}, {age: 2}]);
         });
 
-        it('`this` context of custom filter function should be set to the NgTableParams instance', function () {
+        it('`this` context of custom filter function should be set to the NgTableParams instance', () => {
             // given
             var filterFnSpy = jasmine.createSpy('filterFn', angular.identity).and.callThrough();
             tableParams.settings({ filterOptions: { filterFn: filterFnSpy }});

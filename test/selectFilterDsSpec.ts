@@ -1,21 +1,30 @@
-describe('ngTableSelectFilterDs directive', function(){
+describe('ngTableSelectFilterDs directive', () => {
+      
+    interface IColumnScope extends ng.IScope {
+        $column?: { data?: NgTable.SelectData };
+        $selectData?: NgTable.ISelectOption[];
+    }
+    
+    interface ITableScope extends ng.IScope {
+        $new(): IColumnScope;
+    }
+    
+    let $scope: IColumnScope,
+        elem: string,
+        $compile: ng.ICompileService;
+    beforeEach(angular.mock.module('ngTable'));
 
-    var $scope,
-        elem,
-        $compile;
-    beforeEach(module('ngTable'));
-
-    beforeEach(inject(function($rootScope, _$compile_){
+    beforeEach(inject(($rootScope: ITableScope, _$compile_: ng.ICompileService) => {
         $scope = $rootScope.$new();
         $compile = _$compile_;
         elem = '<select ng-table-select-filter-ds="$column"></select>';
     }));
 
-    describe('array datasource', function(){
+    describe('array datasource', () => {
 
-        it('should add array to current scope', function(){
+        it('should add array to current scope', () =>{
             // given
-            var data = [{id: 1, title: 'A'}];
+            let data = [{id: 1, title: 'A'}];
             $scope.$column = {
                 data: data
             };
@@ -26,7 +35,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toBe(data);
         });
 
-        it('should turn null/undefined array into empty array', function(){
+        it('should turn null/undefined array into empty array', () => {
             // given
             $scope.$column = {
                 data: null
@@ -38,7 +47,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toEqual([]);
         });
 
-        it('should keep the array on scope in sync with data array on $column', function(){
+        it('should keep the array on scope in sync with data array on $column', () => {
             // given
             $scope.$column = {
                 data: null
@@ -47,7 +56,7 @@ describe('ngTableSelectFilterDs directive', function(){
             $scope.$digest();
 
             // when
-            var newArray = [{id: 1, title: 'A'}];
+            let newArray = [{id: 1, title: 'A'}];
             $scope.$column.data = newArray;
             $scope.$digest();
 
@@ -55,13 +64,13 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toBe(newArray);
         });
 
-        it('should add empty option to array', function(){
+        it('should add empty option to array', () => {
             // note: modifying the array supplied is not great as this can cause unexpected side effects
             // however, it does mean that a consumer can update the array and have this reflected in the select list
             // and so therefore it increases the utility of this directive
 
             // given
-            var data = [{id: 1, title: 'A'}];
+            let data = [{id: 1, title: 'A'}];
             $scope.$column = {
                 data: data
             };
@@ -72,12 +81,12 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{ id: '', title: ''}, {id: 1, title: 'A'}]);
         });
 
-        it('should add empty option to empty array', function(){
+        it('should add empty option to empty array', () => {
             // this is useful as it allows for app to add items to array at a future date and still
             // allow for the user to select an empty select option thus removing column filter
 
             // given
-            var data = [];
+            let data: NgTable.ISelectOption[] = [];
             $scope.$column = {
                 data: data
             };
@@ -88,10 +97,10 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{ id: '', title: ''}]);
         });
 
-        it('should not add empty option to array if already present', function(){
+        it('should not add empty option to array if already present', () => {
 
             // given
-            var data = [{id: '', title: ''}, {id: 1, title: 'A'}];
+            let data = [{id: '', title: ''}, {id: 1, title: 'A'}];
             $scope.$column = {
                 data: data
             };
@@ -102,7 +111,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{id: '', title: ''}, {id: 1, title: 'A'}]);
         });
 
-        it('should add empty option to a new arriving array', function(){
+        it('should add empty option to a new arriving array', () => {
             // given
             $scope.$column = {
                 data: [{id: 1, title: 'A'}]
@@ -120,18 +129,16 @@ describe('ngTableSelectFilterDs directive', function(){
 
     });
 
-    describe('function datasource', function(){
+    describe('function datasource', () => {
 
-        var data;
-        beforeEach(function(){
+        let data: NgTable.ISelectOption[];
+        beforeEach(() => {
             $scope.$column = {
-                data: function(){
-                    return data;
-                }
+                data: () => data
             };
         });
 
-        it('should add array to current scope', function(){
+            it('should add array to current scope', () => {
             // given
             data = [{id: 1, title: 'A'}];
             // when
@@ -141,7 +148,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toBe(data);
         });
 
-        it('should turn null/undefined array into empty array', function(){
+        it('should turn null/undefined array into empty array', () => {
             // given
             data = null;
             // when
@@ -151,17 +158,15 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toEqual([]);
         });
 
-        it('should keep the array on scope in sync with data array on $column', function(){
+        it('should keep the array on scope in sync with data array on $column', () => {
             // given
             data = [{id: 1, title: 'A'}];
             $compile(elem)($scope);
             $scope.$digest();
 
             // when
-            var newArray = [{id: 1, title: 'A'}];
-            $scope.$column.data = function(){
-                return newArray;
-            };
+            let newArray = [{id: 1, title: 'A'}];
+            $scope.$column.data = () => newArray;
             $scope.$digest();
 
             // then
@@ -169,7 +174,7 @@ describe('ngTableSelectFilterDs directive', function(){
         });
 
 
-        it('should add empty option to array', function(){
+        it('should add empty option to array', () => {
             // given
             data = [{id: 1, title: 'A'}];
             // when
@@ -179,7 +184,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{ id: '', title: ''}, {id: 1, title: 'A'}]);
         });
 
-        it('should add empty option to empty array', function(){
+        it('should add empty option to empty array', () => {
             // this is useful as it allows for app to add items to array at a future date and still
             // allow for the user to select an empty select option thus removing column filter
 
@@ -192,7 +197,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{ id: '', title: ''}]);
         });
 
-        it('should not add empty option to array if already present', function(){
+        it('should not add empty option to array if already present', () => {
             // given
             data = [{id: '', title: ''}, {id: 1, title: 'A'}];
             // when
@@ -202,16 +207,14 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{id: '', title: ''}, {id: 1, title: 'A'}]);
         });
 
-        it('should add empty option to a new arriving array', function(){
+        it('should add empty option to a new arriving array', () => {
             // given
             data = [{id: 1, title: 'A'}];
             $compile(elem)($scope);
             $scope.$digest();
 
             // when
-            $scope.$column.data = function(){
-                return [{id: 1, title: 'B'}];
-            };
+            $scope.$column.data = () => [{id: 1, title: 'B'}];
             $scope.$digest();
 
             // then
@@ -219,21 +222,17 @@ describe('ngTableSelectFilterDs directive', function(){
         });
     });
 
-    describe('asyn function datasource', function(){
-        var data;
-        var $timeout;
-        beforeEach(inject(function(_$timeout_){
+    describe('asyn function datasource', () => {
+        let data: NgTable.ISelectOption[];
+        let $timeout: ng.ITimeoutService;
+        beforeEach(inject((_$timeout_: ng.ITimeoutService) => {
             $timeout = _$timeout_;
             $scope.$column = {
-                data: function(){
-                    return $timeout(function(){
-                        return data;
-                    }, 10);
-                }
+                data: () => $timeout(() => data, 10)
             };
         }));
 
-        it('should add array to current scope', function(){
+        it('should add array to current scope', () => {
             // given
             data = [{id: 1, title: 'A'}];
             // when
@@ -244,7 +243,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toBe(data);
         });
 
-        it('should turn null/undefined array into empty array', function(){
+        it('should turn null/undefined array into empty array', () => {
             // given
             data = null;
             // when
@@ -255,7 +254,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect($scope.$selectData).toEqual([]);
         });
 
-        it('should keep the array on scope in sync with data array on $column', function(){
+        it('should keep the array on scope in sync with data array on $column', () => {
             // given
             data = [{id: 1, title: 'A'}];
             $compile(elem)($scope);
@@ -263,12 +262,8 @@ describe('ngTableSelectFilterDs directive', function(){
             $timeout.flush();
 
             // when
-            var newArray = [{id: 1, title: 'A'}];
-            $scope.$column.data = function(){
-                return $timeout(function(){
-                    return newArray;
-                }, 10);
-            };
+            let newArray = [{id: 1, title: 'A'}];
+            $scope.$column.data = () => $timeout(() => newArray, 10);
             $scope.$digest();
             $timeout.flush();
 
@@ -277,7 +272,7 @@ describe('ngTableSelectFilterDs directive', function(){
         });
 
 
-        it('should add empty option to array', function(){
+        it('should add empty option to array', () => {
             // given
             data = [{id: 1, title: 'A'}];
             // when
@@ -288,7 +283,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{ id: '', title: ''}, {id: 1, title: 'A'}]);
         });
 
-        it('should add empty option to empty array', function(){
+        it('should add empty option to empty array', () => {
             // this is useful as it allows for app to add items to array at a future date and still
             // allow for the user to select an empty select option thus removing column filter
 
@@ -302,7 +297,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{ id: '', title: ''}]);
         });
 
-        it('should not add empty option to array if already present', function(){
+        it('should not add empty option to array if already present', () => {
             // given
             data = [{id: '', title: ''}, {id: 1, title: 'A'}];
             // when
@@ -313,7 +308,7 @@ describe('ngTableSelectFilterDs directive', function(){
             expect(data).toEqual([{id: '', title: ''}, {id: 1, title: 'A'}]);
         });
 
-        it('should add empty option to a new arriving array', function(){
+        it('should add empty option to a new arriving array', () => {
             // given
             data = [{id: 1, title: 'A'}];
             $compile(elem)($scope);
@@ -321,11 +316,7 @@ describe('ngTableSelectFilterDs directive', function(){
             $timeout.flush();
 
             // when
-            $scope.$column.data = function(){
-                return $timeout(function(){
-                    return [{id: 1, title: 'B'}];
-                }, 10);
-            };
+            $scope.$column.data = () => $timeout(() => [{id: 1, title: 'B'}], 10);
             $scope.$digest();
             $timeout.flush();
 

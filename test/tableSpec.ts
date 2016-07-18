@@ -1,4 +1,37 @@
 describe('ng-table', function() {
+    interface IPerson {
+        id?: number;
+        name?: string;
+        age: number;
+        money?: number;
+    }
+    
+    interface INgTableChildScope extends ng.IScope {
+        params: NgTableParams<any>;
+        $columns: NgTable.Columns.IColumnDef[];
+    }
+    
+    interface ICustomizedScope extends ng.IScope {
+        $$childHead: INgTableChildScope;
+        ageFilter: NgTable.IFilterTemplateDefMap;
+        ageExpandedFilter: { [name: string] : NgTable.IFilterTemplateDef};
+        ageTitle: string | {(): string};
+        captureColumn : ($columnDef: NgTable.Columns.IColumnDef) => any;
+        getCustomClass($column: NgTable.Columns.IColumnDef): string;
+        getFilter($column: NgTable.Columns.IColumnDef): NgTable.IFilterTemplateDefMap;
+        isAgeVisible: boolean;
+        nameTitle(): string;
+        money: () => ng.IPromise<NgTable.ISelectOption[]>;
+        moneyTitle(): string;
+        showAge: boolean;
+        showFilterRow: boolean;
+        showMoney: boolean;
+        showName: boolean;
+        tableParams: NgTableParams<IPerson>;
+        usernameFilter: NgTable.IFilterTemplateDefMap;
+        usernameExpandedFilter: { [name: string] : NgTable.IFilterTemplateDef};
+    }
+    
     var dataset = [
         { id: 1, name: "Moroni", age: 50, money: -10 },
         { id: 2, name: "Tiancum", age: 43, money: 120 },
@@ -18,18 +51,20 @@ describe('ng-table', function() {
         { id: 16, name: "Nephi", age: 29, money: 100 },
         { id: 17, name: "Enos", age: 34, money: -100 }
     ];
-    var NgTableParams;
+    var NgTableParams: NgTable.ITableParamsConstructor<any>;
 
-    beforeEach(module('ngTable'));
+    beforeEach(angular.mock.module('ngTable'));
 
-    var scope;
-    beforeEach(inject(function($rootScope, _NgTableParams_) {
-        scope = $rootScope.$new(true);
+    var scope: ICustomizedScope;
+    beforeEach(inject(function($rootScope: ng.IScope, _NgTableParams_: NgTable.ITableParamsConstructor<any>) {
+        scope = $rootScope.$new(true) as ICustomizedScope;
         NgTableParams = _NgTableParams_;
     }));
 
-    function createNgTableParams(settings) {
-        var initialParams;
+    function createNgTableParams<T>(initialParams?: NgTable.IParamValues<T>, settings?: NgTable.ISettings<T>) : NgTableParams<T>;
+    function createNgTableParams<T>(settings?: NgTable.ISettings<T>) : NgTableParams<T>;
+    function createNgTableParams<T>(settings?: any) : NgTableParams<T> {
+        var initialParams: NgTable.IParamValues<T>;
         if (arguments.length === 2){
             initialParams = arguments[0];
             settings = arguments[1];
@@ -45,8 +80,8 @@ describe('ng-table', function() {
     }
 
     describe('basics', function(){
-        var elm;
-        beforeEach(inject(function($compile, $q) {
+        var elm: ng.IAugmentedJQuery;
+        beforeEach(inject(function($compile: ng.ICompileService, $q: ng.IQService) {
             elm = angular.element(
                     '<div>' +
                     '<table ng-table="tableParams">' +
@@ -97,14 +132,11 @@ describe('ng-table', function() {
             };
 
             scope.money = function(/*$column*/) {
-
-                var def = $q.defer();
-
-                def.resolve([{
+                let selectOptions = [{
                     'id': 10,
                     'title': '10'
-                }]);
-                return def;
+                }];
+                return $q.when(selectOptions);
             };
 
             $compile(elm)(scope);
@@ -261,8 +293,8 @@ describe('ng-table', function() {
 
     describe('title-alt', function() {
 
-        var elm;
-        beforeEach(inject(function($compile) {
+        var elm: ng.IAugmentedJQuery;
+        beforeEach(inject(function($compile: ng.ICompileService) {
             elm = angular.element(
                     '<table ng-table="tableParams">' +
                     '<tr ng-repeat="user in $data">' +
@@ -282,7 +314,7 @@ describe('ng-table', function() {
             scope.$digest();
         }));
 
-        it('should show as data-title-text', inject(function($compile) {
+        it('should show as data-title-text', inject(function($compile: ng.ICompileService) {
             var filterRow = angular.element(elm.find('thead').find('tr')[1]);
             var filterCells = filterRow.find('th');
 
@@ -300,8 +332,8 @@ describe('ng-table', function() {
 
     describe('sorting', function() {
 
-        it('should provide $column definition', inject(function($compile) {
-            var columnDef;
+        it('should provide $column definition', inject(function($compile: ng.ICompileService) {
+            var columnDef: NgTable.Columns.IColumnDef;
             var elm = angular.element(
                     '<table ng-table="tableParams">' +
                     '<tr ng-repeat="user in $data">' +
@@ -320,58 +352,59 @@ describe('ng-table', function() {
             expect(columnDef).toBeDefined();
         }));
 
-        it('should apply initial sort', inject(function ($compile) {
+        it('should apply initial sort', inject(function ($compile: ng.ICompileService) {
             var elm = angular.element(
                 '<table ng-table="tableParams">' +
                 '<tr ng-repeat="user in $data"><td title="\'Age\'" sortable="\'age\'">{{user.age}}</td></tr>' +
                 '</table>');
             $compile(elm)(scope);
 
-            var actualSort;
-            scope.tableParams = new NgTableParams({
+            var actualSort: NgTable.ISortingValues;
+            scope.tableParams = createNgTableParams<IPerson>({
                 sorting: { age: 'desc' }
             }, {
-                getData: function($defer, params){
+                getData: function(params){
                     actualSort = params.sorting();
-                    $defer.resolve([]);
+                    let results: IPerson[] = [];
+                    return results;
                 }});
             scope.$digest();
 
-            expect(actualSort.age).toBe('desc');
+            expect(actualSort['age']).toBe('desc');
         }));
 
-        it('when sorting changes should trigger reload of table', inject(function ($compile) {
+        it('when sorting changes should trigger reload of table', inject(function ($compile: ng.ICompileService) {
             var elm = angular.element(
                 '<table ng-table="tableParams">' +
                 '<tr ng-repeat="user in $data"><td title="\'Age\'" sortable="\'age\'">{{user.age}}</td></tr>' +
                 '</table>');
             $compile(elm)(scope);
 
-            var params = createNgTableParams();
+            var params = createNgTableParams<IPerson>();
             scope.tableParams = params;
             scope.$digest();
-            params.settings().getData.calls.reset();
+            (params.settings().getData as jasmine.Spy).calls.reset();
 
             params.sorting()['age'] = 'desc';
             scope.$digest();
-            expect(params.settings().getData.calls.count()).toBe(1);
+            expect((params.settings().getData as jasmine.Spy).calls.count()).toBe(1);
 
             params.sorting()['age'] = 'asc';
             scope.$digest();
-            expect(params.settings().getData.calls.count()).toBe(2);
+            expect((params.settings().getData as jasmine.Spy).calls.count()).toBe(2);
 
             // setting the same sort order should not trigger reload
             params.sorting({ age: 'asc'});
             scope.$digest();
-            expect(params.settings().getData.calls.count()).toBe(2);
+            expect((params.settings().getData as jasmine.Spy).calls.count()).toBe(2);
         }));
     });
 
     describe('paging', function() {
 
-        var elm;
+        var elm: ng.IAugmentedJQuery;
 
-        beforeEach(inject(function($compile) {
+        beforeEach(inject(function($compile: ng.ICompileService) {
             elm = angular.element(
                 '<table ng-table="tableParams">' +
                 '<tr ng-repeat="user in $data">' +
@@ -379,37 +412,37 @@ describe('ng-table', function() {
                 '</tr>' +
                 '</table>');
 
-            dataCallCount = 0;
             $compile(elm)(scope);
             scope.$digest();
         }));
 
-        function verifyPageWas(expectedPage){
-            expect(scope.tableParams.settings().getData.calls.argsFor(0)[0].page()).toBe(expectedPage);
+        function verifyPageWas(expectedPage: number){
+            let getDataFunc = scope.tableParams.settings().getData as jasmine.Spy;
+            expect(getDataFunc.calls.argsFor(0)[0].page()).toBe(expectedPage);
         }
 
         it('should use initial NgTableParams constructor value', function(){
-            var params = createNgTableParams({ page: 2}, null);
+            var params = createNgTableParams<IPerson>({ page: 2}, null);
             scope.tableParams = params;
             scope.$digest();
             verifyPageWas(2);
-            expect(params.settings().getData.calls.count()).toBe(1);
+            expect((params.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should use initial NgTableParams constructor value combined with filter', function(){
-            var params = createNgTableParams({ page: 2, filter: { age: 5}}, null);
+            var params = createNgTableParams<IPerson>({ page: 2, filter: { age: 5}}, null);
             scope.tableParams = params;
             scope.$digest();
             verifyPageWas(2);
-            expect(params.settings().getData.calls.count()).toBe(1);
+            expect((params.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('changing page # should trigger reload of data', function(){
-            var params = createNgTableParams({ page: 3}, null);
+            var params = createNgTableParams<IPerson>({ page: 3}, null);
             scope.tableParams = params;
             scope.$digest();
             verifyPageWas(3);
-            params.settings().getData.calls.reset();
+            (params.settings().getData as jasmine.Spy).calls.reset();
 
             scope.tableParams.page(5);
             scope.$digest();
@@ -419,7 +452,7 @@ describe('ng-table', function() {
 
     describe('filters', function(){
 
-        var $capturedColumn;
+        var $capturedColumn: NgTable.Columns.IColumnDef;
         beforeEach(inject(function() {
             // stash a reference to $column definition so that its available in asserts
             scope.captureColumn = function ($column) {
@@ -429,9 +462,9 @@ describe('ng-table', function() {
 
         describe('filter specified as alias', function(){
 
-            var elm,
-                tp;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery,
+                tp: NgTableParams<IPerson>;
+            beforeEach(inject(function($compile: ng.ICompileService) {
                 elm = angular.element(
                         '<div>' +
                         '<table ng-table="tableParams">' +
@@ -447,7 +480,7 @@ describe('ng-table', function() {
 
                 // 'text' is a shortcut alias for the template ng-table/filters/text
                 scope.usernameFilter = {username: 'text'};
-                tp = scope.tableParams = createNgTableParams({ filterOptions: { filterDelay: 10 } });
+                tp = scope.tableParams = createNgTableParams<IPerson>({ filterOptions: { filterDelay: 10 } });
                 scope.$digest();
             }));
 
@@ -473,8 +506,8 @@ describe('ng-table', function() {
                 expect($capturedColumn.filter()['username']).toBe('text');
             });
 
-            it('when filter changes should trigger reload of table', inject(function ($timeout) {
-                tp.settings().getData.calls.reset();
+            it('when filter changes should trigger reload of table', inject(function ($timeout: ng.ITimeoutService) {
+                (tp.settings().getData as jasmine.Spy).calls.reset();
 
                 tp.filter()['username'] = 'new value';
                 scope.$digest();
@@ -482,7 +515,7 @@ describe('ng-table', function() {
                 tp.filter()['username'] = 'another value';
                 scope.$digest();
                 $timeout.flush();  // trigger delayed filter
-                expect(tp.settings().getData.calls.count()).toBe(2);
+                expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(2);
 
                 // same value - should not trigger reload
                 tp.filter()['username'] = 'another value';
@@ -492,10 +525,10 @@ describe('ng-table', function() {
                 } catch (ex) {
 
                 }
-                expect(tp.settings().getData.calls.count()).toBe(2);
+                expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(2);
             }));
 
-            it('when filter changes should reset page number to 1', inject(function ($timeout) {
+            it('when filter changes should reset page number to 1', inject(function ($timeout: ng.ITimeoutService) {
                 // trigger initial load of data so that subsequent changes to filter will trigger reset of page #
                 tp.filter()['username'] = 'initial value';
                 scope.$digest();
@@ -516,8 +549,8 @@ describe('ng-table', function() {
 
         describe('filter specified with url', function(){
 
-            var elm;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery;
+            beforeEach(inject(function($compile: ng.ICompileService) {
                 elm = angular.element(
                         '<div>' +
                         '<script type="text/ng-template" id="ng-table/filters/customNum.html"><input type="number" id="{{name}}"/></script>' +
@@ -530,7 +563,7 @@ describe('ng-table', function() {
                         '</div>');
 
                 $compile(elm)(scope);
-                scope.tableParams = createNgTableParams();
+                scope.tableParams = createNgTableParams<IPerson>();
                 scope.$digest();
             }));
 
@@ -545,8 +578,8 @@ describe('ng-table', function() {
 
         describe('multiple filter inputs', function(){
 
-            var elm;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery;
+            beforeEach(inject(function($compile: ng.ICompileService) {
                 elm = angular.element(
                         '<div>' +
                         '<table ng-table="tableParams">' +
@@ -560,7 +593,7 @@ describe('ng-table', function() {
                 $compile(elm)(scope);
                 scope.$digest();
 
-                scope.tableParams = createNgTableParams();
+                scope.tableParams = createNgTableParams<IPerson>();
                 scope.$digest();
             }));
 
@@ -592,8 +625,9 @@ describe('ng-table', function() {
         });
         describe('dynamic filter', function(){
 
-            var elm, ageFilter;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery,
+                ageFilter: NgTable.IFilterTemplateDefMap;
+            beforeEach(inject(function($compile: ng.ICompileService) {
 
                 ageFilter = {age: 'text'};
 
@@ -616,9 +650,11 @@ describe('ng-table', function() {
                         return {username: 'text'};
                     } else if (colDef.id === 1) {
                         return ageFilter;
+                    } else {
+                        return undefined;
                     }
                 };
-                scope.tableParams = createNgTableParams();
+                scope.tableParams = createNgTableParams<IPerson>();
                 scope.$digest();
             }));
 
@@ -644,7 +680,7 @@ describe('ng-table', function() {
             });
 
             it('should render new template as filter changes', function() {
-                ageFilter.age = 'number';
+                ageFilter['age'] = 'number';
                 scope.$digest();
 
                 var ageInput = elm.find('thead').find('tr').eq(1).find('th').eq(1).find('input');
@@ -655,15 +691,15 @@ describe('ng-table', function() {
 
         describe('filter with placeholder value and alias', function(){
 
-            var elm,
-                tp;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery,
+                tp: NgTableParams<IPerson>;
+            beforeEach(inject(function($compile: ng.ICompileService) {
                 elm = angular.element(
                     '<div>' +
                     '<table ng-table="tableParams">' +
                     '<tr ng-repeat="user in $data">' +
                     '<td header-class="captureColumn($column)" title="\'Name\'" '
-                    + 'filter="usernameFilter">{{user.name}}</td>' +
+                    + 'filter="usernameExpandedFilter">{{user.name}}</td>' +
                     '</tr>' +
                     '</table>' +
                     '</div>');
@@ -672,10 +708,10 @@ describe('ng-table', function() {
                 scope.$digest();
 
                 // 'text' is a shortcut alias for the template ng-table/filters/text
-                scope.usernameFilter = {
+                scope.usernameExpandedFilter = {
                     username: { id: 'text', placeholder: 'User name'}
                 };
-                tp = scope.tableParams = createNgTableParams();
+                tp = scope.tableParams = createNgTableParams<IPerson>();
                 scope.$digest();
             }));
 
@@ -689,7 +725,7 @@ describe('ng-table', function() {
             });
 
             it('should databind placeholder value to filter input', function () {
-                scope.usernameFilter.username.placeholder = 'Name of user';
+                scope.usernameExpandedFilter['username'].placeholder = 'Name of user';
                 scope.$digest();
 
                 var input = elm.find('thead').find('tr').eq(1).find('th').find('input');
@@ -699,21 +735,21 @@ describe('ng-table', function() {
             it('should make filter def available on $column', function () {
                 expect($capturedColumn).toBeDefined();
                 expect($capturedColumn.filter).toBeDefined();
-                expect($capturedColumn.filter()).toBe(scope.usernameFilter);
+                expect($capturedColumn.filter()).toBe(scope.usernameExpandedFilter);
             });
         });
 
         describe('filter with placeholder value and url', function(){
 
-            var elm,
-                tp;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery,
+                tp: NgTableParams<IPerson>;
+            beforeEach(inject(function($compile: ng.ICompileService) {
                 elm = angular.element(
                     '<div>' +
                     '<table ng-table="tableParams">' +
                     '<tr ng-repeat="user in $data">' +
                     '<td header-class="captureColumn($column)" title="\'Age\'" '
-                    + 'filter="ageFilter">{{user.age}}</td>' +
+                    + 'filter="ageExpandedFilter">{{user.age}}</td>' +
                     '</tr>' +
                     '</table>' +
                     '</div>');
@@ -721,10 +757,10 @@ describe('ng-table', function() {
                 $compile(elm)(scope);
                 scope.$digest();
 
-                scope.ageFilter = {
+                scope.ageExpandedFilter = {
                     age: { id: 'ng-table/filters/number.html', placeholder: 'User age'}
                 };
-                tp = scope.tableParams = createNgTableParams();
+                tp = scope.tableParams = createNgTableParams<IPerson>();
                 scope.$digest();
             }));
 
@@ -738,7 +774,7 @@ describe('ng-table', function() {
             });
 
             it('should databind placeholder value to filter input', function () {
-                scope.ageFilter.age.placeholder = 'Age of user';
+                scope.ageExpandedFilter['age'].placeholder = 'Age of user';
                 scope.$digest();
 
                 var input = elm.find('thead').find('tr').eq(1).find('th').find('input');
@@ -748,14 +784,14 @@ describe('ng-table', function() {
             it('should make filter def available on $column', function () {
                 expect($capturedColumn).toBeDefined();
                 expect($capturedColumn.filter).toBeDefined();
-                expect($capturedColumn.filter()).toBe(scope.ageFilter);
+                expect($capturedColumn.filter()).toBe(scope.ageExpandedFilter);
             });
         });
     });
 
     describe('show-filter', function(){
-        var elm;
-        beforeEach(inject(function($compile) {
+        var elm: ng.IAugmentedJQuery;
+        beforeEach(inject(function($compile: ng.ICompileService) {
             elm = angular.element(
                 '<div>' +
                 '<table ng-table="tableParams" show-filter="showFilterRow">' +
@@ -766,7 +802,7 @@ describe('ng-table', function() {
                 '</div>');
 
             scope.showFilterRow = true;
-            scope.tableParams = createNgTableParams();
+            scope.tableParams = createNgTableParams<IPerson>();
 
             $compile(elm)(scope);
             scope.$digest();
@@ -793,9 +829,9 @@ describe('ng-table', function() {
     });
 
     describe('$columns', function(){
-        var elm,
-            tp;
-        beforeEach(inject(function($compile) {
+        var elm: ng.IAugmentedJQuery,
+            tp: NgTableParams<IPerson>;
+        beforeEach(inject(function($compile: ng.ICompileService) {
             elm = angular.element(
                 '<div>' +
                 '<table ng-table="tableParams">' +
@@ -814,7 +850,7 @@ describe('ng-table', function() {
             };
             scope.isAgeVisible = true;
             scope.ageTitle = 'Age';
-            tp = scope.tableParams = createNgTableParams();
+            tp = scope.tableParams = createNgTableParams<IPerson>();
             scope.$digest();
         }));
 
@@ -826,7 +862,7 @@ describe('ng-table', function() {
         });
 
         it('should NOT polute the outer scope with a reference to $columns ', function(){
-            expect(scope.$columns).toBeUndefined();
+            expect(scope['$columns']).toBeUndefined();
         });
 
         it('$scolumns should contain a column definition for each `td` element', function(){
@@ -870,7 +906,7 @@ describe('ng-table', function() {
             expect(ageCol.show()).toBe(false);
             expect(scope.isAgeVisible).toBe(false);
 
-            var newFilter = {age: 'select'};
+            var newFilter: NgTable.IFilterTemplateDefMap = {age: 'select'};
             ageCol.filter.assign(scope.$$childHead, newFilter);
             expect(ageCol.filter()).toBe(newFilter);
             expect(scope.ageFilter).toBe(newFilter);
@@ -907,7 +943,7 @@ describe('ng-table', function() {
 
     describe('groups', function(){
 
-        var $capturedColumn;
+        var $capturedColumn: NgTable.Columns.IColumnDef;
         beforeEach(inject(function() {
             // stash a reference to $column definition so that its available in asserts
             scope.captureColumn = function ($column) {
@@ -917,9 +953,9 @@ describe('ng-table', function() {
 
         describe('one groupable column', function(){
 
-            var elm,
-                tp;
-            beforeEach(inject(function($compile) {
+            var elm: ng.IAugmentedJQuery,
+                tp: NgTableParams<IPerson>;
+            beforeEach(inject(function($compile: ng.ICompileService) {
                 elm = angular.element(
                     '<div>' +
                     '<table ng-table="tableParams">' +
@@ -933,7 +969,7 @@ describe('ng-table', function() {
                 $compile(elm)(scope);
                 scope.$digest();
 
-                tp = scope.tableParams = createNgTableParams();
+                tp = scope.tableParams = createNgTableParams<IPerson>();
                 scope.$digest();
             }));
 
@@ -954,10 +990,10 @@ describe('ng-table', function() {
 
     describe('internals', function(){
 
-        var elm,
-            $timeout;
+        var elm: ng.IAugmentedJQuery,
+            $timeout: ng.ITimeoutService;
 
-        beforeEach(inject(function($compile, _$timeout_) {
+        beforeEach(inject(function($compile: ng.ICompileService, _$timeout_: ng.ITimeoutService) {
             $timeout = _$timeout_;
             elm = angular.element(
                 '<table ng-table="tableParams">' +
@@ -971,41 +1007,41 @@ describe('ng-table', function() {
         }));
 
         it('should reload when binding a new tableParams to scope', function(){
-            var tp = createNgTableParams();
+            var tp = createNgTableParams<IPerson>();
             scope.tableParams = tp;
             scope.$digest();
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should reload 1 time when binding a new tableParams that has an initial settings dataset field', function(){
-            var tp = createNgTableParams({ dataset: [1,2,3] });
+            var tp = createNgTableParams({ dataset: [{ age: 1 }] });
             scope.tableParams = tp;
             scope.$digest();
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should reload 1 time when binding a new tableParams with initial filter that has an initial settings dataset field', function(){
-            var tp = createNgTableParams({filter: {age: 1}}, { dataset: [1,2,3] });
+            var tp = createNgTableParams({filter: {age: 1}}, { dataset: [{ age: 1 }] });
             scope.tableParams = tp;
             scope.$digest();
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should reload when binding a new tableParams to scope multiple times', function(){
-            var tp1 = createNgTableParams();
+            var tp1 = createNgTableParams<IPerson>();
             scope.tableParams = tp1;
             scope.$digest();
 
-            expect(tp1.settings().getData.calls.count()).toBe(1);
+            expect((tp1.settings().getData as jasmine.Spy).calls.count()).toBe(1);
 
-            var tp2 = createNgTableParams();
+            var tp2 = createNgTableParams<IPerson>();
             scope.tableParams = tp2;
             scope.$digest();
 
-            expect(tp2.settings().getData.calls.count()).toBe(1);
+            expect((tp2.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should reload 1 time when binding a new settings dataset value and changing the filter', function(){
@@ -1013,7 +1049,7 @@ describe('ng-table', function() {
             var tp = createNgTableParams({filterOptions: { filterDelay: 100 }, dataset: [{age: 1}, {age: 2}]});
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+           (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 1 });
@@ -1021,7 +1057,7 @@ describe('ng-table', function() {
             scope.$digest();
             $timeout.flush(); // trigger the delayed reload
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should reload 1 time when multiple filter changes are debounced', function(){
@@ -1029,7 +1065,7 @@ describe('ng-table', function() {
             var tp = createNgTableParams({filterOptions: { filterDelay: 100 }, dataset: [{age: 1}, {age: 2}]});
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 1 });
@@ -1038,12 +1074,12 @@ describe('ng-table', function() {
             scope.$digest();
             $timeout.flush(); // trigger the delayed reload
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
-        it('should reload 1 time when initial load fails', inject(function($q){
+        it('should reload 1 time when initial load fails', inject(function($q: ng.IQService){
             // given
-            var tp = createNgTableParams({ getData: function(){
+            var tp = createNgTableParams<IPerson>({ getData: function(){
                 return $q.reject('BANG!');
             }});
 
@@ -1052,7 +1088,7 @@ describe('ng-table', function() {
             scope.$digest();
 
             // then
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         }));
 
         it('should reload 1 time with page reset to 1 when binding a new settings dataset value and changing the filter', function(){
@@ -1065,7 +1101,7 @@ describe('ng-table', function() {
             scope.tableParams = tp;
             scope.$digest();
             expect(tp.page()).toBe(2); // checking assumptions
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 1 });
@@ -1073,15 +1109,15 @@ describe('ng-table', function() {
             scope.$digest();
             $timeout.flush(); // trigger the delayed reload
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
             expect(tp.page()).toBe(1);
         });
 
         it('changing filter, orderBy, or page and then calling reload should not invoke getData twice', function(){
-            var tp = createNgTableParams();
+            var tp = createNgTableParams<IPerson>();
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 5 });
@@ -1089,19 +1125,19 @@ describe('ng-table', function() {
             scope.$digest();
 
             // then
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
-        it('change to filter that fails to load should not cause infinite reload loop', inject(function($q){
-            var tp = createNgTableParams({ getData: function(){
-                if (tp.settings().getData.calls.count() > 1){
+        it('change to filter that fails to load should not cause infinite reload loop', inject(function($q: ng.IQService){
+            var tp = createNgTableParams({ getData: function() : ng.IPromise<any> | IPerson[] {
+                if ((tp.settings().getData as jasmine.Spy).calls.count() > 1){
                     return $q.reject('BANG!');
                 }
-                return [1,2]
+                return [{ age: 1 }]
             }});
             scope.tableParams = tp;
             scope.$digest();
-            expect(tp.settings().getData.calls.count()).toBe(1); // checking assumptions
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1); // checking assumptions
             expect(tp.isDataReloadRequired()).toBe(false); // checking assumptions
 
             // when
@@ -1111,14 +1147,14 @@ describe('ng-table', function() {
 
             // then
             expect(tp.isDataReloadRequired()).toBe(false);
-            expect(tp.settings().getData.calls.count()).toBe(2);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(2);
         }));
 
         it('changing filter, orderBy, or page in a callback to reload should re-invoke getData 1 time only', function(){
-            var tp = createNgTableParams();
+            var tp = createNgTableParams<IPerson>();
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 5 });
@@ -1131,17 +1167,17 @@ describe('ng-table', function() {
 
             // then
             // ie calls.count() === (1 x reload) + (1 x sorting)
-            expect(tp.settings().getData.calls.count()).toBe(2);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(2);
         });
 
         it('changing filter, orderBy, or page then reload in a callback to reload should re-invoke getData 1 time only', function(){
 
             // todo: refactor the watches in ngTableController to handle this case
 
-            var tp = createNgTableParams();
+            var tp = createNgTableParams<IPerson>();
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 5 });
@@ -1153,35 +1189,35 @@ describe('ng-table', function() {
 
             // then
             // ie calls.count() === (1 x reload) + (1 x sorting)
-            expect(tp.settings().getData.calls.count()).toBe(2);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(2);
         });
 
         it('should not reload when filter value is assigned the same value', function(){
             // given
-            var tp = createNgTableParams({ filter: {age: 10} }, { });
+            var tp = createNgTableParams<IPerson>({ filter: {age: 10} }, { });
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 10});
             scope.$digest();
 
-            expect(tp.settings().getData.calls.count()).toBe(0);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(0);
         });
 
         it('should reload when filter value changes', function(){
             // given
-            var tp = createNgTableParams({ filter: {age: 10} }, {});
+            var tp = createNgTableParams<IPerson>({ filter: {age: 10} }, {});
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.filter({ age: 12});
             scope.$digest();
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
 
         it('should reload when new dataset supplied', function(){
@@ -1190,16 +1226,16 @@ describe('ng-table', function() {
                 {age: 1},
                 {age: 2}
             ];
-            var tp = createNgTableParams();
+            var tp = createNgTableParams<IPerson>();
             scope.tableParams = tp;
             scope.$digest();
-            tp.settings().getData.calls.reset();
+            (tp.settings().getData as jasmine.Spy).calls.reset();
 
             // when
             tp.settings({ dataset: [{ age: 10}, { age: 11}, { age: 12}]});
             scope.$digest();
 
-            expect(tp.settings().getData.calls.count()).toBe(1);
+            expect((tp.settings().getData as jasmine.Spy).calls.count()).toBe(1);
         });
     });
 });
