@@ -100,6 +100,7 @@
                             title: parsedAttribute('title'),
                             titleAlt: parsedAttribute('title-alt'),
                             headerTitle: parsedAttribute('header-title'),
+                            headerGroup: parsedAttribute('header-group'),
                             sortable: parsedAttribute('sortable'),
                             'class': parsedAttribute('header-class'),
                             filter: parsedAttribute('filter'),

@@ -28,6 +28,46 @@
             return 's' + width;
         };
 
+        $scope.getColspan = function (columns, column) {
+            var colspan = 0;
+            angular.forEach(columns, function (col) {
+                if (column.headerGroup() || 0 !== column.headerGroup().length) {
+                    if (column.headerGroup() == col.headerGroup()) {
+                        colspan++;
+                    }
+                }
+            });
+            return colspan;
+        };
+
+        $scope.getGroupedColumns = function (columns) {
+            if (!angular.isArray(columns)) {
+                return columns;
+            }
+
+            var groupedColumns = [];
+
+            angular.forEach(columns, function (column) {
+                if (!containsGroup(column, groupedColumns)) {
+                    groupedColumns.push(column);
+                }
+            });
+
+            function containsGroup(column, columns) {
+                var i;
+                for (i = 0; i < columns.length; i++) {
+                    if (column.headerGroup() || 0 !== column.headerGroup().length) {
+                        if (columns[i].headerGroup() === column.headerGroup()) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+            return groupedColumns;
+        };
+
         $scope.getFilterPlaceholderValue = function(filterValue/*, filterName*/){
             if (angular.isObject(filterValue)) {
                 return filterValue.placeholder;

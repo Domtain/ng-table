@@ -92,6 +92,7 @@
                 filterData: angular.noop,
                 headerTemplateURL: createGetterSetter(false),
                 headerTitle: createGetterSetter(''),
+                headerGroup: createGetterSetter(''),
                 sortable: createGetterSetter(false),
                 show: createGetterSetter(true),
                 title: createGetterSetter(''),
