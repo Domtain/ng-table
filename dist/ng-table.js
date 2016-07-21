@@ -1855,7 +1855,7 @@
  * @license New BSD License <http://creativecommons.org/licenses/BSD/>
  */
 
-(function(){
+(function () {
     'use strict';
 
     angular.module('ngTable')
@@ -1863,11 +1863,11 @@
 
     ngTableFilterRowController.$inject = ['$scope', 'ngTableFilterConfig'];
 
-    function ngTableFilterRowController($scope, ngTableFilterConfig){
+    function ngTableFilterRowController($scope, ngTableFilterConfig) {
 
         $scope.config = ngTableFilterConfig;
 
-        $scope.getFilterCellCss = function (filter, layout){
+        $scope.getFilterCellCss = function (filter, layout) {
             if (layout !== 'horizontal') {
                 return 's12';
             }
@@ -1880,9 +1880,11 @@
         $scope.getColspan = function (columns, column) {
             var colspan = 0;
             angular.forEach(columns, function (col) {
-                if (column.headerGroup() || 0 !== column.headerGroup().length) {
-                    if (column.headerGroup() == col.headerGroup()) {
-                        colspan++;
+                if (col.show()) {
+                    if (column.headerGroup() || 0 !== column.headerGroup().length) {
+                        if (column.headerGroup() == col.headerGroup()) {
+                            colspan++;
+                        }
                     }
                 }
             });
@@ -1897,8 +1899,10 @@
             var groupedColumns = [];
 
             angular.forEach(columns, function (column) {
-                if (!containsGroup(column, groupedColumns)) {
-                    groupedColumns.push(column);
+                if (column.show()) {
+                    if (!containsGroup(column, groupedColumns)) {
+                        groupedColumns.push(column);
+                    }
                 }
             });
 
@@ -1917,7 +1921,7 @@
             return groupedColumns;
         };
 
-        $scope.getFilterPlaceholderValue = function(filterValue/*, filterName*/){
+        $scope.getFilterPlaceholderValue = function (filterValue/*, filterName*/) {
             if (angular.isObject(filterValue)) {
                 return filterValue.placeholder;
             } else {
