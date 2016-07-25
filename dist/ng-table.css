@@ -96,7 +96,6 @@
 .ng-table th.filter .range-filter {
   margin: 0;
   display: block;
-  min-height: 30px;
 }
 .ng-table th.filter .range-filter .range-filter-item {
   width: 40%;
