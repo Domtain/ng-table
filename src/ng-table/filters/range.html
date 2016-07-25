@@ -1,0 +1,15 @@
+<div class="range-filter">
+    <input class="range-filter-item"
+           type="number"
+           placeholder="0"
+           ng-model="params.filter()[name].min"
+           ng-disabled="$filterRow.disabled"
+    >
+    <span> - </span>
+    <input class="range-filter-item"
+           type="number"
+           placeholder="0"
+           ng-model="params.filter()[name].max"
+           ng-disabled="$filterRow.disabled"
+    >
+</div>

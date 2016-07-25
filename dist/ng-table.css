@@ -93,6 +93,14 @@
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
+.ng-table th.filter .range-filter {
+  margin: 0;
+  display: block;
+  min-height: 30px;
+}
+.ng-table th.filter .range-filter .range-filter-item {
+  width: 40%;
+}
 .ng-table .ng-table-group-header th {
   text-align: left;
 }
