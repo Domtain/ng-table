@@ -99,7 +99,9 @@
                             id: i++,
                             title: parsedAttribute('title'),
                             titleAlt: parsedAttribute('title-alt'),
+                            field: parsedAttribute('field'),
                             headerTitle: parsedAttribute('header-title'),
+                            headerWidth: parsedAttribute('header-width'),
                             headerGroup: parsedAttribute('header-group'),
                             sortable: parsedAttribute('sortable'),
                             'class': parsedAttribute('header-class'),
@@ -107,7 +109,10 @@
                             groupable: parsedAttribute('groupable'),
                             headerTemplateURL: parsedAttribute('header'),
                             filterData: parsedAttribute('filter-data'),
-                            show: el.attr("ng-if") ? parsedAttribute('ng-if') : undefined
+                            show: el.attr("ng-if") ? parsedAttribute('ng-if') : undefined,
+                            dynamic: parsedAttribute('dynamic'),
+                            active: parsedAttribute('active'),
+                            locked: parsedAttribute('locked')
                         });
 
                         if (groupRow || el.attr("ng-if")){
@@ -116,6 +121,9 @@
                             // ng-if or when we definitely need to change visibility of the columns.
                             // currently only ngTableGroupRow directive needs to change visibility
                             setAttrValue('ng-if', '$columns[' + (columns.length - 1) + '].show(this)');
+                        }
+                        if (!el.attr('ng-class')) {
+                            el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                         }
                     });
                     return function(scope, element, attrs, controller) {

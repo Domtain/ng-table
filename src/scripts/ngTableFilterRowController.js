@@ -31,7 +31,7 @@
         $scope.getColspan = function (columns, column) {
             var colspan = 0;
             angular.forEach(columns, function (col) {
-                if (col.show()) {
+                if (col.show() && !col.locked() && col.active()) {
                     if (column.headerGroup() || 0 !== column.headerGroup().length) {
                         if (column.headerGroup() == col.headerGroup()) {
                             colspan++;
@@ -50,7 +50,7 @@
             var groupedColumns = [];
 
             angular.forEach(columns, function (column) {
-                if (column.show()) {
+                if (column.show() && !column.locked() && column.active()) {
                     if (!containsGroup(column, groupedColumns)) {
                         groupedColumns.push(column);
                     }

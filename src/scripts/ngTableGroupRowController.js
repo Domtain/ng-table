@@ -62,7 +62,7 @@
 
         function getVisibleColumns(){
             return $scope.$columns.filter(function($column){
-                return $column.show($scope);
+                return $column.show($scope) && !$column.locked($scope) && $column.active($scope);
             })
         }
 

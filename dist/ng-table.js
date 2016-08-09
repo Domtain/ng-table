@@ -457,17 +457,22 @@
             return extendedCol;
         }
 
-        function createDefaults(){
+        function createDefaults() {
             return {
                 'class': createGetterSetter(''),
                 filter: createGetterSetter(false),
                 groupable: createGetterSetter(false),
                 filterData: angular.noop,
+                field: createGetterSetter(''),
                 headerTemplateURL: createGetterSetter(false),
                 headerTitle: createGetterSetter(''),
+                headerWidth: createGetterSetter(''),
                 headerGroup: createGetterSetter(''),
                 sortable: createGetterSetter(false),
                 show: createGetterSetter(true),
+                dynamic: createGetterSetter(false),
+                locked: createGetterSetter(false),
+                active: createGetterSetter(true),
                 title: createGetterSetter(''),
                 titleAlt: createGetterSetter('')
             };
@@ -1415,9 +1420,25 @@
 
             this.buildColumns = function (columns) {
                 var result = [];
-                (columns || []).forEach(function (col) {
-                    result.push(ngTableColumn.buildColumn(col, $scope, result));
-                });
+                var dynamicColumns = [];
+                var remainingWidth = 100;
+                var hasInactive = false;
+                for (var i = 0; i < columns.length; i++) {
+                    var column = ngTableColumn.buildColumn(columns[i], $scope, result);
+                    column.dynamic() ? dynamicColumns.push(column) : remainingWidth -= column.headerWidth();
+                    result.push(column);
+                }
+                for (var i = 0; i < dynamicColumns.length; i++) {
+                    if (dynamicColumns[i].show()) {
+                        if (remainingWidth - dynamicColumns[i].headerWidth() > 0 && !hasInactive) {
+                            remainingWidth -= dynamicColumns[i].headerWidth();
+                            dynamicColumns[i].active(true);
+                        } else {
+                            dynamicColumns[i].active(false);
+                            hasInactive = true;
+                        }
+                    }
+                }
                 return result
             };
 
@@ -1646,7 +1667,9 @@
                             id: i++,
                             title: parsedAttribute('title'),
                             titleAlt: parsedAttribute('title-alt'),
+                            field: parsedAttribute('field'),
                             headerTitle: parsedAttribute('header-title'),
+                            headerWidth: parsedAttribute('header-width'),
                             headerGroup: parsedAttribute('header-group'),
                             sortable: parsedAttribute('sortable'),
                             'class': parsedAttribute('header-class'),
@@ -1654,7 +1677,10 @@
                             groupable: parsedAttribute('groupable'),
                             headerTemplateURL: parsedAttribute('header'),
                             filterData: parsedAttribute('filter-data'),
-                            show: el.attr("ng-if") ? parsedAttribute('ng-if') : undefined
+                            show: el.attr("ng-if") ? parsedAttribute('ng-if') : undefined,
+                            dynamic: parsedAttribute('dynamic'),
+                            active: parsedAttribute('active'),
+                            locked: parsedAttribute('locked')
                         });
 
                         if (groupRow || el.attr("ng-if")){
@@ -1663,6 +1689,9 @@
                             // ng-if or when we definitely need to change visibility of the columns.
                             // currently only ngTableGroupRow directive needs to change visibility
                             setAttrValue('ng-if', '$columns[' + (columns.length - 1) + '].show(this)');
+                        }
+                        if (!el.attr('ng-class')) {
+                            el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                         }
                     });
                     return function(scope, element, attrs, controller) {
@@ -1732,7 +1761,11 @@
                     }
                     var showExpr = el.attr('ng-if');
                     if (!showExpr){
-                        el.attr('ng-if', '$columns[$index].show(this)');
+                        el.attr('ng-if', '$columns[$index].show(this) && !$columns[$index].locked(this) && $columns[$index].active(this)');
+                    }
+                    var ngClassExpr = el.attr('ng-class');
+                    if (!ngClassExpr) {
+                        el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                     }
                 });
                 return function (scope, element, attrs, controller) {
@@ -1743,6 +1776,7 @@
 
                     scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
+                        scope.$columns.rebuild = controller.buildColumns;
                         controller.loadFilterData(scope.$columns);
                     });
                 };
@@ -1880,7 +1914,7 @@
         $scope.getColspan = function (columns, column) {
             var colspan = 0;
             angular.forEach(columns, function (col) {
-                if (col.show()) {
+                if (col.show() && !col.locked() && col.active()) {
                     if (column.headerGroup() || 0 !== column.headerGroup().length) {
                         if (column.headerGroup() == col.headerGroup()) {
                             colspan++;
@@ -1899,7 +1933,7 @@
             var groupedColumns = [];
 
             angular.forEach(columns, function (column) {
-                if (column.show()) {
+                if (column.show() && !column.locked() && column.active()) {
                     if (!containsGroup(column, groupedColumns)) {
                         groupedColumns.push(column);
                     }
@@ -2023,7 +2057,7 @@
 
         function getVisibleColumns(){
             return $scope.$columns.filter(function($column){
-                return $column.show($scope);
+                return $column.show($scope) && !$column.locked($scope) && $column.active($scope);
             })
         }
 
@@ -2257,7 +2291,7 @@
 })();
 
 angular.module('ngTable').run(['$templateCache', function ($templateCache) {
-	$templateCache.put('ng-table/filterRow.html', '<tr ng-show="show_filter" class="ng-table-filters"> <th data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in $columns" ng-if="$column.show(this)" class="filter {{$column.class(this)}}" ng-class="params.settings().filterOptions.filterLayout===\'horizontal\' ? \'filter-horizontal\' : \'\'"> <div ng-repeat="(name, filter) in $column.filter(this)" ng-include="config.getTemplateUrl(filter)" class="filter-cell" ng-class="[getFilterCellCss($column.filter(this), params.settings().filterOptions.filterLayout), $last ? \'last\' : \'\']"> </div> </th> </tr> ');
+	$templateCache.put('ng-table/filterRow.html', '<tr ng-show="show_filter" class="ng-table-filters hidden-sm hidden-xs"> <th colspan="{{getColspan($columns, $column)}}" data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in getGroupedColumns($columns)" class="filter {{$column.class(this)}}" ng-class="params.settings().filterOptions.filterLayout===\'horizontal\' ? \'filter-horizontal\' : \'\'"> <div ng-repeat="(name, filter) in $column.filter(this)" ng-include="config.getTemplateUrl(filter)" class="filter-cell" ng-class="[getFilterCellCss($column.filter(this), params.settings().filterOptions.filterLayout), $last ? \'last\' : \'\']"></div> </th> </tr>');
 	$templateCache.put('ng-table/filters/number.html', '<input type="number" name="{{name}}" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" class="input-filter form-control" placeholder="{{getFilterPlaceholderValue(filter, name)}}"/> ');
 	$templateCache.put('ng-table/filters/range.html', '<div class="range-filter"> <input class="range-filter-item" type="number" placeholder="0" ng-model="params.filter()[name].min" ng-disabled="$filterRow.disabled"> <span> - </span> <input class="range-filter-item" type="number" placeholder="0" ng-model="params.filter()[name].max" ng-disabled="$filterRow.disabled"> </div>');
 	$templateCache.put('ng-table/filters/select-multiple.html', '<select ng-options="data.id as data.title for data in $column.data" ng-disabled="$filterRow.disabled" multiple ng-multiple="true" ng-model="params.filter()[name]" class="filter filter-select-multiple form-control" name="{{name}}"> </select> ');
@@ -2267,7 +2301,7 @@ angular.module('ngTable').run(['$templateCache', function ($templateCache) {
 	$templateCache.put('ng-table/groupRow.html', '<tr ng-if="params.hasGroup()" ng-show="$groupRow.show" class="ng-table-group-header"> <th colspan="{{getVisibleColumns().length}}" class="sortable" ng-class="{ \'sort-asc\': params.hasGroup($selGroup, \'asc\'), \'sort-desc\':params.hasGroup($selGroup, \'desc\') }"> <a href="" ng-click="isSelectorOpen=!isSelectorOpen" class="ng-table-group-selector"> <strong class="sort-indicator">{{$selGroupTitle}}</strong> <button class="btn btn-default btn-xs ng-table-group-close" ng-click="$groupRow.show=false; $event.preventDefault(); $event.stopPropagation();"> <span class="glyphicon glyphicon-remove"></span> </button> <button class="btn btn-default btn-xs ng-table-group-toggle" ng-click="toggleDetail(); $event.preventDefault(); $event.stopPropagation();"> <span class="glyphicon" ng-class="{ \'glyphicon-resize-small\': params.settings().groupOptions.isExpanded, \'glyphicon-resize-full\': !params.settings().groupOptions.isExpanded }"></span> </button> </a> <div class="list-group" ng-if="isSelectorOpen"> <a href="" class="list-group-item" ng-repeat="group in getGroupables()" ng-click="groupBy(group)"> <strong>{{ getGroupTitle(group)}}</strong> <strong ng-class="isSelectedGroup(group) && \'sort-indicator\'"></strong> </a> </div> </th> </tr> ');
 	$templateCache.put('ng-table/header.html', '<ng-table-group-row></ng-table-group-row> <ng-table-sorter-row></ng-table-sorter-row> <ng-table-filter-row></ng-table-filter-row> ');
 	$templateCache.put('ng-table/pager.html', '<div class="ng-cloak ng-table-pager" ng-if="params.data.length"> <div ng-if="params.settings().counts.length" class="ng-table-counts btn-group pull-right"> <button ng-repeat="count in params.settings().counts" type="button" ng-class="{\'active\':params.count()==count}" ng-click="params.count(count)" class="btn btn-default"> <span ng-bind="count"></span> </button> </div> <ul ng-if="pages.length" class="pagination ng-table-pagination"> <li ng-class="{\'disabled\': !page.active && !page.current, \'active\': page.current}" ng-repeat="page in pages" ng-switch="page.type"> <a ng-switch-when="prev" ng-click="params.page(page.number)" href="">&laquo;</a> <a ng-switch-when="first" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="page" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="more" ng-click="params.page(page.number)" href="">&#8230;</a> <a ng-switch-when="last" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="next" ng-click="params.page(page.number)" href="">&raquo;</a> </li> </ul> </div> ');
-	$templateCache.put('ng-table/sorterRow.html', '<tr> <th ng-repeat="$column in $columns" ng-class="{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-if="$column.show(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" class="ng-table-header" ng-class="{\'sort-indicator\': params.settings().sortingIndicator==\'div\'}"> <span ng-bind="$column.title(this)" ng-class="{\'sort-indicator\': params.settings().sortingIndicator==\'span\'}"></span> <i ng-if="$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i> </div> <div ng-if="template" ng-include="template"></div> </th> </tr>');
+	$templateCache.put('ng-table/sorterRow.html', '<tr> <th ng-repeat="$column in $columns" ng-class="{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-if="$column.show(this) && !$column.locked(this) && $column.active(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" class="ng-table-header" ng-class="{\'sort-indicator\': params.settings().sortingIndicator==\'div\'}"> <span ng-bind="$column.title(this)" ng-class="{\'sort-indicator\': params.settings().sortingIndicator==\'span\'}"></span> <i ng-if="$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i> </div> <div ng-if="template" ng-include="template"></div> </th> </tr>');
 }]);
     return angular.module('ngTable');
 }));

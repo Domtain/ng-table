@@ -142,9 +142,25 @@
 
             this.buildColumns = function (columns) {
                 var result = [];
-                (columns || []).forEach(function (col) {
-                    result.push(ngTableColumn.buildColumn(col, $scope, result));
-                });
+                var dynamicColumns = [];
+                var remainingWidth = 100;
+                var hasInactive = false;
+                for (var i = 0; i < columns.length; i++) {
+                    var column = ngTableColumn.buildColumn(columns[i], $scope, result);
+                    column.dynamic() ? dynamicColumns.push(column) : remainingWidth -= column.headerWidth();
+                    result.push(column);
+                }
+                for (var i = 0; i < dynamicColumns.length; i++) {
+                    if (dynamicColumns[i].show()) {
+                        if (remainingWidth - dynamicColumns[i].headerWidth() > 0 && !hasInactive) {
+                            remainingWidth -= dynamicColumns[i].headerWidth();
+                            dynamicColumns[i].active(true);
+                        } else {
+                            dynamicColumns[i].active(false);
+                            hasInactive = true;
+                        }
+                    }
+                }
                 return result
             };
 

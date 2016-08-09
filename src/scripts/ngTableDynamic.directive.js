@@ -52,7 +52,11 @@
                     }
                     var showExpr = el.attr('ng-if');
                     if (!showExpr){
-                        el.attr('ng-if', '$columns[$index].show(this)');
+                        el.attr('ng-if', '$columns[$index].show(this) && !$columns[$index].locked(this) && $columns[$index].active(this)');
+                    }
+                    var ngClassExpr = el.attr('ng-class');
+                    if (!ngClassExpr) {
+                        el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                     }
                 });
                 return function (scope, element, attrs, controller) {
@@ -63,6 +67,7 @@
 
                     scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
+                        scope.$columns.rebuild = controller.buildColumns;
                         controller.loadFilterData(scope.$columns);
                     });
                 };

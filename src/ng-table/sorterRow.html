@@ -6,7 +6,7 @@
                     'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
                   }"
         ng-click="sortBy($column, $event)"
-        ng-if="$column.show(this)"
+        ng-if="$column.show(this) && !$column.locked(this) && $column.active(this)"
         ng-init="template = $column.headerTemplateURL(this)"
         class="header {{$column.class(this)}}">
         <div ng-if="!template" class="ng-table-header" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}">

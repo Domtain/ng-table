@@ -84,17 +84,22 @@
             return extendedCol;
         }
 
-        function createDefaults(){
+        function createDefaults() {
             return {
                 'class': createGetterSetter(''),
                 filter: createGetterSetter(false),
                 groupable: createGetterSetter(false),
                 filterData: angular.noop,
+                field: createGetterSetter(''),
                 headerTemplateURL: createGetterSetter(false),
                 headerTitle: createGetterSetter(''),
+                headerWidth: createGetterSetter(''),
                 headerGroup: createGetterSetter(''),
                 sortable: createGetterSetter(false),
                 show: createGetterSetter(true),
+                dynamic: createGetterSetter(false),
+                locked: createGetterSetter(false),
+                active: createGetterSetter(true),
                 title: createGetterSetter(''),
                 titleAlt: createGetterSetter('')
             };
