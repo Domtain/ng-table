@@ -67,7 +67,13 @@
 
                     scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
+
                         scope.$columns.rebuild = controller.buildColumns;
+                        scope.$columns.hasNext = controller.hasNext;
+                        scope.$columns.hasPrevious = controller.hasPrevious;
+                        scope.$columns.next = controller.next;
+                        scope.$columns.previous = controller.previous;
+
                         controller.loadFilterData(scope.$columns);
                     });
                 };

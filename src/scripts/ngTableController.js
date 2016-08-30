@@ -17,7 +17,8 @@
     angular.module('ngTable').controller('ngTableController', ['$scope', 'NgTableParams', '$timeout', '$parse', '$compile', '$attrs', '$element',
         'ngTableColumn', 'ngTableEventsChannel',
         function ($scope, NgTableParams, $timeout, $parse, $compile, $attrs, $element, ngTableColumn, ngTableEventsChannel) {
-            var isFirstTimeLoad = true;
+            var isFirstTimeLoad = true,
+                dynamicColumnSpace = 0;
             $scope.$filterRow = {};
             $scope.$loading = false;
 
@@ -140,24 +141,91 @@
                 });
             };
 
+            this.hasNext = function () {
+                var columns = getVisibleColumns();
+                var isActive = true;
+                for (var i = columns.length; i--;) {
+                    if (columns[i].dynamic()) {
+                        if (!isActive && columns[i].active()) {
+                            return true
+                        }
+                        isActive = columns[i].active();
+                    }
+
+                }
+                return false;
+            };
+
+            this.hasPrevious = function () {
+                var columns = getVisibleColumns();
+                var isActive = true;
+                for (var i = 0; i < columns.length; i++) {
+                    if (columns[i].dynamic()) {
+                        if (!isActive && columns[i].active()) {
+                            return true
+                        }
+                        isActive = columns[i].active();
+                    }
+
+                }
+                return false;
+            };
+
+            this.next = function () {
+                if (this.hasNext()) {
+                    var columns = getVisibleColumns();
+                    var remainingWidth = dynamicColumnSpace;
+                    for (var i = columns.length; i--;) {
+                        if (columns[i].dynamic()) {
+                            var j = i + 1;
+                            while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
+                                columns[j].active(columns[i].active());
+                                j--;
+                            }
+                            if (columns[j] && columns[j].dynamic()) {
+                                columns[j].active(false);
+                            }
+                            i = j - 1;
+                        }
+                    }
+                }
+            };
+
+            this.previous = function () {
+                if (this.hasPrevious()) {
+                    var columns = getVisibleColumns();
+                    var remainingWidth = dynamicColumnSpace;
+                    for (var i = columns.length; i--;) {
+                        if (columns[i].dynamic()) {
+                            var j = i - 1;
+                            while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
+                                columns[j].active(columns[i].active());
+                                j--;
+                            }
+                            columns[i].active(false);
+                            i = j + 1;
+                        }
+                    }
+                }
+            };
+
             this.buildColumns = function (columns) {
                 var result = [];
                 var dynamicColumns = [];
-                var remainingWidth = 100;
-                var hasInactive = false;
+                var remainingWidth = $element.offsetWidth || 1200;
                 for (var i = 0; i < columns.length; i++) {
                     var column = ngTableColumn.buildColumn(columns[i], $scope, result);
                     column.dynamic() ? dynamicColumns.push(column) : remainingWidth -= column.headerWidth();
                     result.push(column);
                 }
+                dynamicColumnSpace = remainingWidth;
                 for (var i = 0; i < dynamicColumns.length; i++) {
                     if (dynamicColumns[i].show()) {
-                        if (remainingWidth - dynamicColumns[i].headerWidth() > 0 && !hasInactive) {
+                        if (remainingWidth - dynamicColumns[i].headerWidth() >= 0) {
                             remainingWidth -= dynamicColumns[i].headerWidth();
                             dynamicColumns[i].active(true);
                         } else {
                             dynamicColumns[i].active(false);
-                            hasInactive = true;
                         }
                     }
                 }
