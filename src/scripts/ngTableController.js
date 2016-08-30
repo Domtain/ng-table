@@ -304,7 +304,7 @@
 
             function getVisibleColumns() {
                 return ($scope.$columns || []).filter(function (c) {
-                    return c.show($scope);
+                    return c.show($scope) && !c.locked($scope);
                 });
             }
 
