@@ -172,39 +172,30 @@
             };
 
             this.next = function () {
-                if (this.hasNext()) {
-                    var columns = getVisibleColumns();
-                    var remainingWidth = dynamicColumnSpace;
-                    for (var i = columns.length; i--;) {
-                        if (columns[i].dynamic()) {
-                            var j = i + 1;
-                            while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
-                                columns[j].active(columns[i].active());
-                                j--;
-                            }
-                            if (columns[j] && columns[j].dynamic()) {
-                                columns[j].active(false);
-                            }
-                            i = j - 1;
-                        }
+                var columns = getVisibleColumns();
+                var remainingWidth = dynamicColumnSpace;
+                for (var i = columns.length; i--;) {
+                    if (columns[i + 1] && columns[i + 1].dynamic() && columns[i].active() && columns[i].dynamic()) {
+                        columns[i].active(false);
+                        remainingWidth -= columns[i + 1].headerWidth();
+                        columns[i + 1].active(remainingWidth >= 0);
                     }
                 }
+
             };
 
             this.previous = function () {
-                if (this.hasPrevious()) {
-                    var columns = getVisibleColumns();
-                    var remainingWidth = dynamicColumnSpace;
-                    for (var i = columns.length; i--;) {
-                        if (columns[i].dynamic()) {
-                            var j = i - 1;
-                            while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
-                                columns[j].active(columns[i].active());
-                                j--;
-                            }
-                            columns[i].active(false);
-                            i = j + 1;
+                var columns = getVisibleColumns();
+                var remainingWidth = dynamicColumnSpace;
+                for (var i = columns.length; i--;) {
+                    if (columns[i].dynamic()) {
+                        var j = i - 1;
+                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
+                            columns[j].active(columns[i].active());
+                            j--;
                         }
+                        columns[i].active(false);
+                        i = j + 1;
                     }
                 }
             };

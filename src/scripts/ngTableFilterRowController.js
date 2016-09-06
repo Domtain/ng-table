@@ -50,7 +50,7 @@
             var groupedColumns = [];
 
             angular.forEach(columns, function (column) {
-                if (column.show() && !column.locked() && column.active()) {
+                if (!column.locked() && column.active()) {
                     if (!containsGroup(column, groupedColumns)) {
                         groupedColumns.push(column);
                     }
