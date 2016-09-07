@@ -48,7 +48,7 @@
                     // this used in responsive table
                     var titleExpr = getAttrValue('title');
                     if (!titleExpr){
-                        el.attr('data-title-text', '{{$columns[$index].titleAlt(this) || $columns[$index].title(this)}}');
+                        el.attr('data-title-text', '{{::($columns[$index].titleAlt(this) || $columns[$index].title(this))}}');
                     }
                     var showExpr = el.attr('ng-if');
                     if (!showExpr){
@@ -56,7 +56,7 @@
                     }
                     var ngClassExpr = el.attr('ng-class');
                     if (!ngClassExpr) {
-                        el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
+                        el.attr('ng-class', '::{sorted: params.sorting()[$columns[$index].field(this)]}');
                     }
                 });
                 return function (scope, element, attrs, controller) {

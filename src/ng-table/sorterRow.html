@@ -1,6 +1,6 @@
 <tr>
-    <th ng-repeat="$column in $columns"
-        ng-class="{
+    <th ng-repeat="$column in ::$columns"
+        ng-class="::{
                     'sortable': $column.sortable(this),
                     'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
                     'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
@@ -9,9 +9,9 @@
         ng-if="$column.show(this) && !$column.locked(this) && $column.active(this)"
         ng-init="template = $column.headerTemplateURL(this)"
         class="header {{$column.class(this)}}">
-        <div ng-if="!template" class="ng-table-header" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}">
-            <span ng-bind="$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}"></span>
-            <i ng-if="$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i>
+        <div ng-if="!template" class="ng-table-header" ng-class="::{'sort-indicator': params.settings().sortingIndicator == 'div'}">
+            <span ng-bind="::$column.title(this)" ng-class="::{'sort-indicator': params.settings().sortingIndicator == 'span'}"></span>
+            <i ng-if="::$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{::$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i>
         </div>
         <div ng-if="template" ng-include="template"></div>
     </th>

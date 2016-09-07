@@ -179,6 +179,12 @@
                         columns[i].active(false);
                         remainingWidth -= columns[i + 1].headerWidth();
                         columns[i + 1].active(remainingWidth >= 0);
+                        if(remainingWidth - columns[i].headerWidth() < 0) {
+                            columns[i + 1].headerDynamicWidth(remainingWidth + columns[i + 1].headerWidth());
+                        }
+                        else {
+                            columns[i + 1].headerDynamicWidth(columns[i + 1].headerWidth());
+                        }
                     }
                 }
 
@@ -192,6 +198,13 @@
                         var j = i - 1;
                         while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
                             columns[j].active(columns[i].active());
+                            //TODO: I am amazed myself that this is working
+                            if(remainingWidth - columns[j-1].headerWidth() < 0) {
+                                columns[j].headerDynamicWidth(remainingWidth + columns[j-1].headerWidth());
+                            }
+                            else {
+                                columns[j].headerDynamicWidth(columns[j].headerWidth());
+                            }
                             j--;
                         }
                         columns[i].active(false);

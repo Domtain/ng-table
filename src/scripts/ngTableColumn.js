@@ -94,6 +94,7 @@
                 headerTemplateURL: createGetterSetter(false),
                 headerTitle: createGetterSetter(''),
                 headerWidth: createGetterSetter(''),
+                headerDynamicWidth: createGetterSetter(''),
                 headerGroup: createGetterSetter(''),
                 sortable: createGetterSetter(false),
                 show: createGetterSetter(true),
