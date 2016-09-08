@@ -1297,7 +1297,7 @@
         'ngTableColumn', 'ngTableEventsChannel',
         function ($scope, NgTableParams, $timeout, $parse, $compile, $attrs, $element, ngTableColumn, ngTableEventsChannel) {
             var isFirstTimeLoad = true,
-                dynamicColumnSpace = 0;
+                dynamicColumnsSpace = 0;
             $scope.$filterRow = {};
             $scope.$loading = false;
 
@@ -1316,6 +1316,14 @@
                     timer = $timeout(callback, ms);
                 };
             })();
+
+            function setDynamicColumnsSpace(space) {
+                dynamicColumnsSpace = space;
+            }
+
+            function getDynamicColumnsSpace() {
+                return dynamicColumnsSpace;
+            }
 
             function onDataReloadStatusChange(newStatus/*, oldStatus*/) {
                 if (!newStatus || $scope.params.hasErrorState()) {
@@ -1420,6 +1428,17 @@
                 });
             };
 
+            this.isLastActive = function (column) {
+                var columns = getVisibleColumns();
+                for (var i = 0; i < columns.length; i++) {
+                    if (columns[i].dynamic() && columns[i].active && column !== columns[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
+
             this.hasNext = function () {
                 var columns = getVisibleColumns();
                 var isActive = true;
@@ -1452,13 +1471,13 @@
 
             this.next = function () {
                 var columns = getVisibleColumns();
-                var remainingWidth = dynamicColumnSpace;
+                var remainingWidth = getDynamicColumnsSpace();
                 for (var i = columns.length; i--;) {
                     if (columns[i + 1] && columns[i + 1].dynamic() && columns[i].active() && columns[i].dynamic()) {
                         columns[i].active(false);
                         remainingWidth -= columns[i + 1].headerWidth();
                         columns[i + 1].active(remainingWidth >= 0);
-                        if(remainingWidth - columns[i].headerWidth() < 0) {
+                        if (remainingWidth - columns[i].headerWidth() < 0) {
                             columns[i + 1].headerDynamicWidth(remainingWidth + columns[i + 1].headerWidth());
                         }
                         else {
@@ -1471,23 +1490,23 @@
 
             this.previous = function () {
                 var columns = getVisibleColumns();
-                var remainingWidth = dynamicColumnSpace;
-                for (var i = columns.length; i--;) {
+                var remainingWidth = getDynamicColumnsSpace();
+                for (var i = columns.length, k = -1; i--;) {
                     if (columns[i].dynamic()) {
-                        var j = i - 1;
-                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
+                        var j = i - 1
+                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
                             columns[j].active(columns[i].active());
-                            //TODO: I am amazed myself that this is working
-                            if(remainingWidth - columns[j-1].headerWidth() < 0) {
-                                columns[j].headerDynamicWidth(remainingWidth + columns[j-1].headerWidth());
-                            }
-                            else {
-                                columns[j].headerDynamicWidth(columns[j].headerWidth());
-                            }
+                            columns[j].headerDynamicWidth(columns[j].headerWidth())
+                            remainingWidth -= columns[j].headerWidth();
+                            k = j;
                             j--;
                         }
+                        columns[i].headerDynamicWidth(columns[i].headerWidth())
                         columns[i].active(false);
                         i = j + 1;
+                    }
+                    if (remainingWidth > 0 && k != -1 && i == 0) {
+                        columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
                     }
                 }
             };
@@ -1495,21 +1514,26 @@
             this.buildColumns = function (columns) {
                 var result = [];
                 var dynamicColumns = [];
-                var remainingWidth = $element.offsetWidth || 1200;
+                var columnsSpace = $element.offsetWidth || 1200;
                 for (var i = 0; i < columns.length; i++) {
                     var column = ngTableColumn.buildColumn(columns[i], $scope, result);
-                    column.dynamic() ? dynamicColumns.push(column) : remainingWidth -= column.headerWidth();
+                    column.dynamic() ? dynamicColumns.push(column) : columnsSpace -= column.headerWidth();
                     result.push(column);
                 }
-                dynamicColumnSpace = remainingWidth;
-                for (var i = 0; i < dynamicColumns.length; i++) {
+                setDynamicColumnsSpace(columnsSpace);
+                for (var i = 0, j = -1; i < dynamicColumns.length; i++) {
                     if (dynamicColumns[i].show()) {
-                        if (remainingWidth - dynamicColumns[i].headerWidth() >= 0) {
-                            remainingWidth -= dynamicColumns[i].headerWidth();
+                        if (columnsSpace - dynamicColumns[i].headerWidth() >= 0) {
+                            columnsSpace -= dynamicColumns[i].headerWidth();
                             dynamicColumns[i].active(true);
+                            j = i;
                         } else {
                             dynamicColumns[i].active(false);
                         }
+                        dynamicColumns[i].headerDynamicWidth(dynamicColumns[i].headerWidth())
+                    }
+                    if (columnsSpace > 0 && j != -1 && (i == dynamicColumns.length - 1)) {
+                        dynamicColumns[j].headerDynamicWidth(columnsSpace + dynamicColumns[j].headerWidth())
                     }
                 }
                 return result
@@ -1847,10 +1871,12 @@
                     controller.setupBindingsToInternalScope(expr.tableParams);
                     controller.compileDirectiveTemplates();
 
+                    scope.rebuild = controller.buildColumns;
+
                     scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
 
-                        scope.$columns.rebuild = controller.buildColumns;
+                        scope.$columns.isLastActive = controller.isLastActive;
                         scope.$columns.hasNext = controller.hasNext;
                         scope.$columns.hasPrevious = controller.hasPrevious;
                         scope.$columns.next = controller.next;
@@ -2380,7 +2406,7 @@ angular.module('ngTable').run(['$templateCache', function ($templateCache) {
 	$templateCache.put('ng-table/groupRow.html', '<tr ng-if="params.hasGroup()" ng-show="$groupRow.show" class="ng-table-group-header"> <th colspan="{{getVisibleColumns().length}}" class="sortable" ng-class="{ \'sort-asc\': params.hasGroup($selGroup, \'asc\'), \'sort-desc\':params.hasGroup($selGroup, \'desc\') }"> <a href="" ng-click="isSelectorOpen=!isSelectorOpen" class="ng-table-group-selector"> <strong class="sort-indicator">{{$selGroupTitle}}</strong> <button class="btn btn-default btn-xs ng-table-group-close" ng-click="$groupRow.show=false; $event.preventDefault(); $event.stopPropagation();"> <span class="glyphicon glyphicon-remove"></span> </button> <button class="btn btn-default btn-xs ng-table-group-toggle" ng-click="toggleDetail(); $event.preventDefault(); $event.stopPropagation();"> <span class="glyphicon" ng-class="{ \'glyphicon-resize-small\': params.settings().groupOptions.isExpanded, \'glyphicon-resize-full\': !params.settings().groupOptions.isExpanded }"></span> </button> </a> <div class="list-group" ng-if="isSelectorOpen"> <a href="" class="list-group-item" ng-repeat="group in getGroupables()" ng-click="groupBy(group)"> <strong>{{ getGroupTitle(group)}}</strong> <strong ng-class="isSelectedGroup(group) && \'sort-indicator\'"></strong> </a> </div> </th> </tr> ');
 	$templateCache.put('ng-table/header.html', '<ng-table-group-row></ng-table-group-row> <ng-table-sorter-row></ng-table-sorter-row> <ng-table-filter-row></ng-table-filter-row> ');
 	$templateCache.put('ng-table/pager.html', '<div class="ng-cloak ng-table-pager" ng-if="params.data.length"> <div ng-if="params.settings().counts.length" class="ng-table-counts btn-group pull-right"> <button ng-repeat="count in params.settings().counts" type="button" ng-class="{\'active\':params.count()==count}" ng-click="params.count(count)" class="btn btn-default"> <span ng-bind="count"></span> </button> </div> <ul ng-if="pages.length" class="pagination ng-table-pagination"> <li ng-class="{\'disabled\': !page.active && !page.current, \'active\': page.current}" ng-repeat="page in pages" ng-switch="page.type"> <a ng-switch-when="prev" ng-click="params.page(page.number)" href="">&laquo;</a> <a ng-switch-when="first" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="page" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="more" ng-click="params.page(page.number)" href="">&#8230;</a> <a ng-switch-when="last" ng-click="params.page(page.number)" href=""><span ng-bind="page.number"></span></a> <a ng-switch-when="next" ng-click="params.page(page.number)" href="">&raquo;</a> </li> </ul> </div> ');
-	$templateCache.put('ng-table/sorterRow.html', '<tr> <th ng-repeat="$column in ::$columns" ng-class="::{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-if="$column.show(this) && !$column.locked(this) && $column.active(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" class="ng-table-header" ng-class="::{\'sort-indicator\': params.settings().sortingIndicator==\'div\'}"> <span ng-bind="::$column.title(this)" ng-class="::{\'sort-indicator\': params.settings().sortingIndicator==\'span\'}"></span> <i ng-if="::$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{::$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i> </div> <div ng-if="template" ng-include="template"></div> </th> </tr>');
+	$templateCache.put('ng-table/sorterRow.html', '<tr> <th ng-repeat="$column in ::$columns" ng-class="::{ \'sortable\': $column.sortable(this), \'sort-asc\': params.sorting()[$column.sortable(this)]==\'asc\', \'sort-desc\': params.sorting()[$column.sortable(this)]==\'desc\' }" ng-click="sortBy($column, $event)" ng-attr-width="{{$column.headerDynamicWidth() || $column.headerWidth() || auto}}" ng-if="$column.show(this) && !$column.locked(this) && $column.active(this)" ng-init="template=$column.headerTemplateURL(this)" class="header {{$column.class(this)}}"> <div ng-if="!template" class="ng-table-header" ng-class="::{\'sort-indicator\': params.settings().sortingIndicator==\'div\'}"> <span ng-bind="::$column.title(this)" ng-class="::{\'sort-indicator\': params.settings().sortingIndicator==\'span\'}"></span> <i ng-if="::$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{::$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i> </div> <div ng-if="template" ng-include="template"></div> </th> </tr>');
 }]);
     return angular.module('ngTable');
 }));

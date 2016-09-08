@@ -6,6 +6,7 @@
                     'sort-desc': params.sorting()[$column.sortable(this)]=='desc'
                   }"
         ng-click="sortBy($column, $event)"
+        ng-attr-width="{{$column.headerDynamicWidth() || $column.headerWidth() || auto}}"
         ng-if="$column.show(this) && !$column.locked(this) && $column.active(this)"
         ng-init="template = $column.headerTemplateURL(this)"
         class="header {{$column.class(this)}}">

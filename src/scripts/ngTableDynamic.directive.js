@@ -65,10 +65,12 @@
                     controller.setupBindingsToInternalScope(expr.tableParams);
                     controller.compileDirectiveTemplates();
 
+                    scope.rebuild = controller.buildColumns;
+
                     scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
 
-                        scope.$columns.rebuild = controller.buildColumns;
+                        scope.$columns.isLastActive = controller.isLastActive;
                         scope.$columns.hasNext = controller.hasNext;
                         scope.$columns.hasPrevious = controller.hasPrevious;
                         scope.$columns.next = controller.next;

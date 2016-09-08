@@ -18,7 +18,7 @@
         'ngTableColumn', 'ngTableEventsChannel',
         function ($scope, NgTableParams, $timeout, $parse, $compile, $attrs, $element, ngTableColumn, ngTableEventsChannel) {
             var isFirstTimeLoad = true,
-                dynamicColumnSpace = 0;
+                dynamicColumnsSpace = 0;
             $scope.$filterRow = {};
             $scope.$loading = false;
 
@@ -37,6 +37,14 @@
                     timer = $timeout(callback, ms);
                 };
             })();
+
+            function setDynamicColumnsSpace(space) {
+                dynamicColumnsSpace = space;
+            }
+
+            function getDynamicColumnsSpace() {
+                return dynamicColumnsSpace;
+            }
 
             function onDataReloadStatusChange(newStatus/*, oldStatus*/) {
                 if (!newStatus || $scope.params.hasErrorState()) {
@@ -141,6 +149,17 @@
                 });
             };
 
+            this.isLastActive = function (column) {
+                var columns = getVisibleColumns();
+                for (var i = 0; i < columns.length; i++) {
+                    if (columns[i].dynamic() && columns[i].active && column !== columns[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+
+
             this.hasNext = function () {
                 var columns = getVisibleColumns();
                 var isActive = true;
@@ -173,13 +192,13 @@
 
             this.next = function () {
                 var columns = getVisibleColumns();
-                var remainingWidth = dynamicColumnSpace;
+                var remainingWidth = getDynamicColumnsSpace();
                 for (var i = columns.length; i--;) {
                     if (columns[i + 1] && columns[i + 1].dynamic() && columns[i].active() && columns[i].dynamic()) {
                         columns[i].active(false);
                         remainingWidth -= columns[i + 1].headerWidth();
                         columns[i + 1].active(remainingWidth >= 0);
-                        if(remainingWidth - columns[i].headerWidth() < 0) {
+                        if (remainingWidth - columns[i].headerWidth() < 0) {
                             columns[i + 1].headerDynamicWidth(remainingWidth + columns[i + 1].headerWidth());
                         }
                         else {
@@ -192,23 +211,23 @@
 
             this.previous = function () {
                 var columns = getVisibleColumns();
-                var remainingWidth = dynamicColumnSpace;
-                for (var i = columns.length; i--;) {
+                var remainingWidth = getDynamicColumnsSpace();
+                for (var i = columns.length, k = -1; i--;) {
                     if (columns[i].dynamic()) {
-                        var j = i - 1;
-                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth -= columns[j].headerWidth()) >= 0) {
+                        var j = i - 1
+                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
                             columns[j].active(columns[i].active());
-                            //TODO: I am amazed myself that this is working
-                            if(remainingWidth - columns[j-1].headerWidth() < 0) {
-                                columns[j].headerDynamicWidth(remainingWidth + columns[j-1].headerWidth());
-                            }
-                            else {
-                                columns[j].headerDynamicWidth(columns[j].headerWidth());
-                            }
+                            columns[j].headerDynamicWidth(columns[j].headerWidth())
+                            remainingWidth -= columns[j].headerWidth();
+                            k = j;
                             j--;
                         }
+                        columns[i].headerDynamicWidth(columns[i].headerWidth())
                         columns[i].active(false);
                         i = j + 1;
+                    }
+                    if (remainingWidth > 0 && k != -1 && i == 0) {
+                        columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
                     }
                 }
             };
@@ -216,21 +235,26 @@
             this.buildColumns = function (columns) {
                 var result = [];
                 var dynamicColumns = [];
-                var remainingWidth = $element.offsetWidth || 1200;
+                var columnsSpace = $element.offsetWidth || 1200;
                 for (var i = 0; i < columns.length; i++) {
                     var column = ngTableColumn.buildColumn(columns[i], $scope, result);
-                    column.dynamic() ? dynamicColumns.push(column) : remainingWidth -= column.headerWidth();
+                    column.dynamic() ? dynamicColumns.push(column) : columnsSpace -= column.headerWidth();
                     result.push(column);
                 }
-                dynamicColumnSpace = remainingWidth;
-                for (var i = 0; i < dynamicColumns.length; i++) {
+                setDynamicColumnsSpace(columnsSpace);
+                for (var i = 0, j = -1; i < dynamicColumns.length; i++) {
                     if (dynamicColumns[i].show()) {
-                        if (remainingWidth - dynamicColumns[i].headerWidth() >= 0) {
-                            remainingWidth -= dynamicColumns[i].headerWidth();
+                        if (columnsSpace - dynamicColumns[i].headerWidth() >= 0) {
+                            columnsSpace -= dynamicColumns[i].headerWidth();
                             dynamicColumns[i].active(true);
+                            j = i;
                         } else {
                             dynamicColumns[i].active(false);
                         }
+                        dynamicColumns[i].headerDynamicWidth(dynamicColumns[i].headerWidth())
+                    }
+                    if (columnsSpace > 0 && j != -1 && (i == dynamicColumns.length - 1)) {
+                        dynamicColumns[j].headerDynamicWidth(columnsSpace + dynamicColumns[j].headerWidth())
                     }
                 }
                 return result
