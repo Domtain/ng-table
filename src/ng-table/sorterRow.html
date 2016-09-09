@@ -1,5 +1,5 @@
 <tr>
-    <th ng-repeat="$column in ::$columns"
+    <th ng-repeat="$column in $columns"
         ng-class="{
                     'sortable': $column.sortable(this),
                     'sort-asc': params.sorting()[$column.sortable(this)]=='asc',
