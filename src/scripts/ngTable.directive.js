@@ -97,6 +97,7 @@
                         // a corresponding "safe" default
                         columns.push({
                             id: i++,
+                            type: parsedAttribute('type'),
                             title: parsedAttribute('title'),
                             titleAlt: parsedAttribute('title-alt'),
                             field: parsedAttribute('field'),
@@ -123,7 +124,7 @@
                             setAttrValue('ng-if', '$columns[' + (columns.length - 1) + '].show(this)');
                         }
                         if (!el.attr('ng-class')) {
-                            el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
+                            el.attr('ng-class', '::{sorted: params.sorting()[$columns[$index].field(this)]}');
                         }
                     });
                     return function(scope, element, attrs, controller) {

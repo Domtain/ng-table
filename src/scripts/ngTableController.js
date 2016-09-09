@@ -159,7 +159,6 @@
                 return true;
             };
 
-
             this.hasNext = function () {
                 var columns = getVisibleColumns();
                 var isActive = true;
@@ -257,7 +256,7 @@
                         dynamicColumns[j].headerDynamicWidth(columnsSpace + dynamicColumns[j].headerWidth())
                     }
                 }
-                return result
+                return result;
             };
 
             this.parseNgTableDynamicExpr = function (attr) {

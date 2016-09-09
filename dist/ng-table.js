@@ -460,6 +460,7 @@
         function createDefaults() {
             return {
                 'class': createGetterSetter(''),
+                type: createGetterSetter('text'),
                 filter: createGetterSetter(false),
                 groupable: createGetterSetter(false),
                 filterData: angular.noop,
@@ -1011,9 +1012,12 @@
                             name = encodeURIComponent(key);
                         if (isSignificantValue(item, key)) {
                             if (typeof item === "object" && !angular.isFunction(item)) {
+                                collectValue(item, name);
+                                /*
                                 if (Object.getOwnPropertyNames(item).length > 0) {
                                     collectValue(item, name);
                                 }
+                                */
                             }
                             else {
                                 collectValue(item, name);
@@ -1438,7 +1442,6 @@
                 return true;
             };
 
-
             this.hasNext = function () {
                 var columns = getVisibleColumns();
                 var isActive = true;
@@ -1536,7 +1539,7 @@
                         dynamicColumns[j].headerDynamicWidth(columnsSpace + dynamicColumns[j].headerWidth())
                     }
                 }
-                return result
+                return result;
             };
 
             this.parseNgTableDynamicExpr = function (attr) {
@@ -1762,6 +1765,7 @@
                         // a corresponding "safe" default
                         columns.push({
                             id: i++,
+                            type: parsedAttribute('type'),
                             title: parsedAttribute('title'),
                             titleAlt: parsedAttribute('title-alt'),
                             field: parsedAttribute('field'),
@@ -1788,7 +1792,7 @@
                             setAttrValue('ng-if', '$columns[' + (columns.length - 1) + '].show(this)');
                         }
                         if (!el.attr('ng-class')) {
-                            el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
+                            el.attr('ng-class', '::{sorted: params.sorting()[$columns[$index].field(this)]}');
                         }
                     });
                     return function(scope, element, attrs, controller) {
@@ -1873,7 +1877,8 @@
 
                     scope.rebuild = controller.buildColumns;
 
-                    scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
+                    scope.$watch(expr.columns, function (newCols/*, oldCols*/) {
+
                         scope.$columns = controller.buildColumns(newCols);
 
                         scope.$columns.isLastActive = controller.isLastActive;
@@ -1883,7 +1888,7 @@
                         scope.$columns.previous = controller.previous;
 
                         controller.loadFilterData(scope.$columns);
-                    });
+                    }, true);
                 };
             }
         };

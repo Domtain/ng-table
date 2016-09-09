@@ -509,9 +509,12 @@
                             name = encodeURIComponent(key);
                         if (isSignificantValue(item, key)) {
                             if (typeof item === "object" && !angular.isFunction(item)) {
+                                collectValue(item, name);
+                                /*
                                 if (Object.getOwnPropertyNames(item).length > 0) {
                                     collectValue(item, name);
                                 }
+                                */
                             }
                             else {
                                 collectValue(item, name);

@@ -87,6 +87,7 @@
         function createDefaults() {
             return {
                 'class': createGetterSetter(''),
+                type: createGetterSetter('text'),
                 filter: createGetterSetter(false),
                 groupable: createGetterSetter(false),
                 filterData: angular.noop,
