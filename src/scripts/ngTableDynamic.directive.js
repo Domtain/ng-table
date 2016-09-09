@@ -67,8 +67,7 @@
 
                     scope.rebuild = controller.buildColumns;
 
-                    scope.$watch(expr.columns, function (newCols/*, oldCols*/) {
-
+                    scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
 
                         scope.$columns.isLastActive = controller.isLastActive;
@@ -78,7 +77,7 @@
                         scope.$columns.previous = controller.previous;
 
                         controller.loadFilterData(scope.$columns);
-                    }, true);
+                    });
                 };
             }
         };
