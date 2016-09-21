@@ -1792,7 +1792,7 @@
                             setAttrValue('ng-if', '$columns[' + (columns.length - 1) + '].show(this)');
                         }
                         if (!el.attr('ng-class')) {
-                            el.attr('ng-class', '::{sorted: params.sorting()[$columns[$index].field(this)]}');
+                            el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                         }
                     });
                     return function(scope, element, attrs, controller) {
@@ -1866,7 +1866,7 @@
                     }
                     var ngClassExpr = el.attr('ng-class');
                     if (!ngClassExpr) {
-                        el.attr('ng-class', '::{sorted: params.sorting()[$columns[$index].field(this)]}');
+                        el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                     }
                 });
                 return function (scope, element, attrs, controller) {

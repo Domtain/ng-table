@@ -56,7 +56,7 @@
                     }
                     var ngClassExpr = el.attr('ng-class');
                     if (!ngClassExpr) {
-                        el.attr('ng-class', '::{sorted: params.sorting()[$columns[$index].field(this)]}');
+                        el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
                     }
                 });
                 return function (scope, element, attrs, controller) {
