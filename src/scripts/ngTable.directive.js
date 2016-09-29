@@ -124,7 +124,7 @@
                             setAttrValue('ng-if', '$columns[' + (columns.length - 1) + '].show(this)');
                         }
                         if (!el.attr('ng-class')) {
-                            el.attr('ng-class', '{sorted: params.sorting()[$columns[$index].field(this)]}');
+                            el.attr('ng-class', '{sorted: params.sorting()[$columns[' + (columns.length - 1) + '].sortable(this)]}');
                         }
                     });
                     return function(scope, element, attrs, controller) {
