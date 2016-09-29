@@ -1251,6 +1251,7 @@
                 dataset: null, //allows data to be set when table is initialized
                 total: 0,
                 defaultSort: 'desc',
+                allowUnsort: false,
                 filterOptions: angular.copy(defaultFilterOptions),
                 groupOptions: angular.copy(defaultGroupOptions),
                 counts: [10, 25, 50, 100],
@@ -2257,7 +2258,7 @@
  * @license New BSD License <http://creativecommons.org/licenses/BSD/>
  */
 
-(function(){
+(function () {
     'use strict';
 
     angular.module('ngTable')
@@ -2265,7 +2266,7 @@
 
     ngTableSorterRowController.$inject = ['$scope'];
 
-    function ngTableSorterRowController($scope){
+    function ngTableSorterRowController($scope) {
 
         $scope.sortBy = sortBy;
 
@@ -2276,11 +2277,32 @@
             if (!parsedSortable) {
                 return;
             }
+            var settings = $scope.params.settings();
             var defaultSort = $scope.params.settings().defaultSort;
             var inverseSort = (defaultSort === 'asc' ? 'desc' : 'asc');
-            var sorting = $scope.params.sorting() && $scope.params.sorting()[parsedSortable] && ($scope.params.sorting()[parsedSortable] === defaultSort);
-            var sortingParams = (event.ctrlKey || event.metaKey) ? $scope.params.sorting() : {};
-            sortingParams[parsedSortable] = (sorting ? inverseSort : defaultSort);
+            var multipleSort = (event.ctrlKey || event.metaKey);
+            var sorting = $scope.params.sorting(), newSort = defaultSort;
+            if (sorting && sorting[parsedSortable]) {
+                if (settings.allowUnsort) {
+                    if (sorting[parsedSortable] === defaultSort) {
+                        newSort = inverseSort;
+                    } else if (sorting[parsedSortable] === inverseSort) {
+                        newSort = false;
+                    } else {
+                        newSort = defaultSort;
+                    }
+                } else {
+                    newSort = sorting[parsedSortable] === defaultSort ? inverseSort : defaultSort;
+                }
+            }
+
+            var sortingParams = multipleSort ? $scope.params.sorting() : {};
+
+            if (newSort) {
+                sortingParams[parsedSortable] = newSort;
+            } else {
+                delete sortingParams[parsedSortable];
+            }
             $scope.params.parameters({
                 sorting: sortingParams
             });

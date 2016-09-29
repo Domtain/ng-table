@@ -748,6 +748,7 @@
                 dataset: null, //allows data to be set when table is initialized
                 total: 0,
                 defaultSort: 'desc',
+                allowUnsort: false,
                 filterOptions: angular.copy(defaultFilterOptions),
                 groupOptions: angular.copy(defaultGroupOptions),
                 counts: [10, 25, 50, 100],
