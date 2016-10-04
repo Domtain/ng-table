@@ -1526,16 +1526,15 @@
                 }
                 setDynamicColumnsSpace(columnsSpace);
                 for (var i = 0, j = -1; i < dynamicColumns.length; i++) {
-                    if (dynamicColumns[i].show()) {
-                        if (columnsSpace - dynamicColumns[i].headerWidth() >= 0) {
-                            columnsSpace -= dynamicColumns[i].headerWidth();
-                            dynamicColumns[i].active(true);
-                            j = i;
-                        } else {
-                            dynamicColumns[i].active(false);
-                        }
-                        dynamicColumns[i].headerDynamicWidth(dynamicColumns[i].headerWidth())
+                    if (columnsSpace - dynamicColumns[i].headerWidth() >= 0 && !dynamicColumns[i].locked() && dynamicColumns[i].show()) {
+                        columnsSpace -= dynamicColumns[i].headerWidth();
+                        dynamicColumns[i].active(true);
+                        dynamicColumns[i].headerDynamicWidth(dynamicColumns[i].headerWidth());
+                        j = i; //Remember last column that was set to active
+                    } else {
+                        dynamicColumns[i].active(false);
                     }
+                    //If there is still remaining space, add it to the last active column
                     if (columnsSpace > 0 && j != -1 && (i == dynamicColumns.length - 1)) {
                         dynamicColumns[j].headerDynamicWidth(columnsSpace + dynamicColumns[j].headerWidth())
                     }
