@@ -84,6 +84,10 @@
   -moz-opacity: 0.6;
   opacity: 0.6;
 }
+.ng-table th.filter {
+  /* Portrait phones and smaller */
+
+}
 .ng-table th.filter .input-filter {
   margin: 0;
   display: block;
@@ -93,12 +97,23 @@
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
-.ng-table th.filter .range-filter {
-  margin: 0;
-  display: block;
+.ng-table th.filter .flextable {
+  display: table;
+  width: 100%;
 }
-.ng-table th.filter .range-filter .range-filter-item {
-  width: 40%;
+.ng-table th.filter .flextable-item {
+  display: table-cell;
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+@media (max-width: 480px) {
+  .ng-table th.filter .flextable {
+    display: inline-block;
+  }
+  .ng-table th.filter .flextable-item {
+    display: inline-block;
+  }
 }
 .ng-table .ng-table-group-header th {
   text-align: left;

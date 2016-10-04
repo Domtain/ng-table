@@ -1,15 +1,13 @@
-<div class="range-filter">
-    <input class="range-filter-item"
+<div class="flextable input-group input-group-sm">
+    <input class="flextable-item form-control"
            type="number"
            placeholder="0"
            ng-model="params.filter()[name].min"
-           ng-disabled="$filterRow.disabled"
-    >
-    <span> - </span>
-    <input class="range-filter-item"
+           ng-disabled="$filterRow.disabled">
+    <span class="flextable-item p-l-xs p-r-xs">-</span>
+    <input class="flextable-item form-control"
            type="number"
            placeholder="0"
            ng-model="params.filter()[name].max"
-           ng-disabled="$filterRow.disabled"
-    >
+           ng-disabled="$filterRow.disabled">
 </div>
