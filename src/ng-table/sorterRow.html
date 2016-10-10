@@ -12,7 +12,7 @@
         class="header {{$column.class(this)}}">
         <div ng-if="!template" class="ng-table-header" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'div'}">
             <span ng-bind="::$column.title(this)" ng-class="{'sort-indicator': params.settings().sortingIndicator == 'span'}"></span>
-            <i ng-if="::$column.headerTitle(this)" data-toggle="tooltip" data-placement="top" title="{{::$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i>
+            <i ng-if="::$column.headerTitle(this)" ng-click="$event.stopPropagation();" data-toggle="tooltip" data-placement="top" title="{{::$column.headerTitle(this)}}" class="glyphicon glyphicon-info-sign"></i>
         </div>
         <div ng-if="template" ng-include="template"></div>
     </th>
