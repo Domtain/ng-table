@@ -1878,7 +1878,7 @@
 
                     scope.rebuild = controller.buildColumns;
 
-                    scope.$watchCollection(expr.columns, function (newCols/*, oldCols*/) {
+                    scope.$watch(expr.columns, function (newCols/*, oldCols*/) {
                         scope.$columns = controller.buildColumns(newCols);
 
                         scope.$columns.isLastActive = controller.isLastActive;
@@ -1888,7 +1888,7 @@
                         scope.$columns.previous = controller.previous;
 
                         controller.loadFilterData(scope.$columns);
-                    });
+                    }, true);
                 };
             }
         };
@@ -2422,7 +2422,7 @@
 })();
 
 angular.module('ngTable').run(['$templateCache', function ($templateCache) {
-	$templateCache.put('ng-table/filterRow.html', '<tr ng-show="show_filter" class="ng-table-filters hidden-sm hidden-xs"> <th colspan="{{getColspan($columns, $column)}}" data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in getGroupedColumns($columns)" class="filter {{$column.class(this)}}" ng-class="params.settings().filterOptions.filterLayout===\'horizontal\' ? \'filter-horizontal\' : \'\'"> <div ng-repeat="(name, filter) in $column.filter(this)" ng-include="config.getTemplateUrl(filter)" class="filter-cell" ng-class="[getFilterCellCss($column.filter(this), params.settings().filterOptions.filterLayout), $last ? \'last\' : \'\']"></div> </th> </tr>');
+	$templateCache.put('ng-table/filterRow.html', '<tr ng-show="show_filter" class="ng-table-filters hidden-sm hidden-xs"> <th colspan="{{getColspan($columns, $column)}}" data-title-text="{{$column.titleAlt(this) || $column.title(this)}}" ng-repeat="$column in ::getGroupedColumns($columns)" class="filter {{$column.class(this)}}" ng-class="params.settings().filterOptions.filterLayout===\'horizontal\' ? \'filter-horizontal\' : \'\'"> <div ng-repeat="(name, filter) in $column.filter(this)" ng-include="config.getTemplateUrl(filter)" class="filter-cell" ng-class="[getFilterCellCss($column.filter(this), params.settings().filterOptions.filterLayout), $last ? \'last\' : \'\']"></div> </th> </tr>');
 	$templateCache.put('ng-table/filters/number.html', '<input type="number" name="{{name}}" ng-disabled="$filterRow.disabled" ng-model="params.filter()[name]" class="input-filter form-control" placeholder="{{getFilterPlaceholderValue(filter, name)}}"/> ');
 	$templateCache.put('ng-table/filters/range.html', '<div class="flextable input-group input-group-sm"> <input class="flextable-item form-control" type="number" placeholder="0" ng-model="params.filter()[name].min" ng-disabled="$filterRow.disabled"> <span class="flextable-item p-l-xs p-r-xs">-</span> <input class="flextable-item form-control" type="number" placeholder="0" ng-model="params.filter()[name].max" ng-disabled="$filterRow.disabled"> </div>');
 	$templateCache.put('ng-table/filters/select-multiple.html', '<select ng-options="data.id as data.title for data in $column.data" ng-disabled="$filterRow.disabled" multiple ng-multiple="true" ng-model="params.filter()[name]" class="filter filter-select-multiple form-control" name="{{name}}"> </select> ');

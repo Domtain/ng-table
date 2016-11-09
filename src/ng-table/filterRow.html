@@ -1,7 +1,7 @@
 <tr ng-show="show_filter" class="ng-table-filters hidden-sm hidden-xs">
     <th colspan="{{getColspan($columns, $column)}}"
         data-title-text="{{$column.titleAlt(this) || $column.title(this)}}"
-        ng-repeat="$column in getGroupedColumns($columns)"
+        ng-repeat="$column in ::getGroupedColumns($columns)"
         class="filter {{$column.class(this)}}"
         ng-class="params.settings().filterOptions.filterLayout==='horizontal' ? 'filter-horizontal' : ''">
         <div ng-repeat="(name, filter) in $column.filter(this)"
