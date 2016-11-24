@@ -1445,30 +1445,24 @@
 
             this.hasNext = function () {
                 var columns = getVisibleColumns();
-                var isActive = true;
-                for (var i = columns.length; i--;) {
+                for (var i = columns.length - 1; i >= 0; i--) {
                     if (columns[i].dynamic()) {
-                        if (!isActive && columns[i].active()) {
+                        if (!columns[i + 1].active() && columns[i].active()) {
                             return true
                         }
-                        isActive = columns[i].active();
                     }
-
                 }
                 return false;
             };
 
             this.hasPrevious = function () {
                 var columns = getVisibleColumns();
-                var isActive = true;
                 for (var i = 0; i < columns.length; i++) {
                     if (columns[i].dynamic()) {
-                        if (!isActive && columns[i].active()) {
+                        if (!columns[i - 1].active() && columns[i].active()) {
                             return true
                         }
-                        isActive = columns[i].active();
                     }
-
                 }
                 return false;
             };
@@ -1476,20 +1470,42 @@
             this.next = function () {
                 var columns = getVisibleColumns();
                 var remainingWidth = getDynamicColumnsSpace();
-                for (var i = columns.length; i--;) {
-                    if (columns[i + 1] && columns[i + 1].dynamic() && columns[i].active() && columns[i].dynamic()) {
+                for (var i = columns.length - 1, j = i + 1, k = -1; i >= 0; i--, j--) {
+                    if (columns[i].dynamic()) {
+                        if (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
+                            columns[j].active(true);
+                            columns[j].headerDynamicWidth(columns[j].headerWidth())
+                            remainingWidth -= columns[j].headerDynamicWidth();
+                            k = j;
+                        }
                         columns[i].active(false);
-                        remainingWidth -= columns[i + 1].headerWidth();
-                        columns[i + 1].active(remainingWidth >= 0);
-                        if (remainingWidth - columns[i].headerWidth() < 0) {
-                            columns[i + 1].headerDynamicWidth(remainingWidth + columns[i + 1].headerWidth());
-                        }
-                        else {
-                            columns[i + 1].headerDynamicWidth(columns[i + 1].headerWidth());
-                        }
+                    }
+                    if (remainingWidth >= 0 && columns[k] && columns[k].dynamic() && i === 0) {
+                        columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
                     }
                 }
+            };
 
+            this.previous = function () {
+                var columns = getVisibleColumns();
+                var remainingWidth = getDynamicColumnsSpace();
+                for (var i = columns.length - 1, j = i - 1, k = -1; i >= 0; i--, j--) {
+                    if (columns[i].dynamic()) {
+                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
+                            columns[j].active(true);
+                            columns[j].headerDynamicWidth(columns[j].headerWidth())
+                            remainingWidth -= columns[j].headerWidth();
+                            k = j;
+                            j--;
+                        }
+                        columns[i].headerDynamicWidth(columns[i].headerWidth())
+                        columns[i].active(false);
+                        i = j + 1;
+                    }
+                    if (remainingWidth > 0 && columns[k] && columns[k].dynamic() && i == 0) {
+                        columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
+                    }
+                }
             };
 
             this.previous = function () {
