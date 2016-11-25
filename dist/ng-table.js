@@ -1468,42 +1468,46 @@
             };
 
             this.next = function () {
-                var columns = getVisibleColumns();
-                var remainingWidth = getDynamicColumnsSpace();
-                for (var i = columns.length - 1, j = i + 1, k = -1; i >= 0; i--, j--) {
-                    if (columns[i].dynamic()) {
-                        if (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
-                            columns[j].active(true);
-                            columns[j].headerDynamicWidth(columns[j].headerWidth())
-                            remainingWidth -= columns[j].headerDynamicWidth();
-                            k = j;
+                if (this.hasNext()) {
+                    var columns = getVisibleColumns();
+                    var remainingWidth = getDynamicColumnsSpace();
+                    for (var i = columns.length - 1, j = i + 1, k = -1; i >= 0; i--, j--) {
+                        if (columns[i].dynamic()) {
+                            if (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
+                                columns[j].active(true);
+                                columns[j].headerDynamicWidth(columns[j].headerWidth())
+                                remainingWidth -= columns[j].headerDynamicWidth();
+                                k = j;
+                            }
+                            columns[i].active(false);
                         }
-                        columns[i].active(false);
-                    }
-                    if (remainingWidth >= 0 && columns[k] && columns[k].dynamic() && i === 0) {
-                        columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
+                        if (remainingWidth >= 0 && columns[k] && columns[k].dynamic() && i === 0) {
+                            columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
+                        }
                     }
                 }
             };
 
             this.previous = function () {
-                var columns = getVisibleColumns();
-                var remainingWidth = getDynamicColumnsSpace();
-                for (var i = columns.length - 1, j = i - 1, k = -1; i >= 0; i--, j--) {
-                    if (columns[i].dynamic()) {
-                        while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
-                            columns[j].active(true);
-                            columns[j].headerDynamicWidth(columns[j].headerWidth())
-                            remainingWidth -= columns[j].headerWidth();
-                            k = j;
-                            j--;
+                if (this.hasPrevious()) {
+                    var columns = getVisibleColumns();
+                    var remainingWidth = getDynamicColumnsSpace();
+                    for (var i = columns.length - 1, j = i - 1, k = -1; i >= 0; i--, j--) {
+                        if (columns[i].dynamic()) {
+                            while (columns[j] && columns[j].dynamic() && columns[i].active() && (remainingWidth - columns[j].headerWidth()) >= 0) {
+                                columns[j].active(true);
+                                columns[j].headerDynamicWidth(columns[j].headerWidth())
+                                remainingWidth -= columns[j].headerWidth();
+                                k = j;
+                                j--;
+                            }
+                            columns[i].headerDynamicWidth(columns[i].headerWidth())
+                            columns[i].active(false);
+                            i = j + 1;
                         }
-                        columns[i].headerDynamicWidth(columns[i].headerWidth())
-                        columns[i].active(false);
-                        i = j + 1;
-                    }
-                    if (remainingWidth > 0 && columns[k] && columns[k].dynamic() && i == 0) {
-                        columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
+                        if (remainingWidth > 0 && columns[k] && columns[k].dynamic() && i == 0) {
+                            columns[k].headerDynamicWidth(remainingWidth + columns[k].headerWidth())
+                        }
                     }
                 }
             };
@@ -1680,8 +1684,11 @@
             }
 
             commonInit();
-        }]);
-})();
+        }
+    ])
+    ;
+})
+();
 
 /**
  * ngTable: Table + Angular JS
