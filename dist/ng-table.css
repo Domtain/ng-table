@@ -131,6 +131,9 @@
   .ng-table-responsive thead tr.ng-table-filters th {
     padding: 0;
   }
+  .ng-table-responsive thead tr.ng-table-filters th[colspan="0"] {
+    display: none;
+  }
   .ng-table-responsive thead tr.ng-table-filters th form > div {
     padding: 8px;
   }

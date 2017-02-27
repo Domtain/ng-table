@@ -31,12 +31,15 @@
         $scope.getColspan = function (columns, column) {
             var colspan = 0;
             angular.forEach(columns, function (col) {
-                if (col.show() && !col.locked() && col.active()) {
-                    if (column.headerGroup() || 0 !== column.headerGroup().length) {
+                if (column.headerGroup()) {
+                    if (col.show() && !col.locked() && col.active()) {
                         if (column.headerGroup() == col.headerGroup()) {
                             colspan++;
                         }
                     }
+                }
+                else {
+                    colspan = 1;
                 }
             });
             return colspan;
