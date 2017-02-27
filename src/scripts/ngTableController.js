@@ -254,7 +254,7 @@
             this.buildColumns = function (columns) {
                 var result = [];
                 var dynamicColumns = [];
-                var columnsSpace = $element.offsetWidth || 1200;
+                var columnsSpace = $element[0].offsetWidth || 1200;
                 for (var i = 0; i < columns.length; i++) {
                     var column = ngTableColumn.buildColumn(columns[i], $scope, result);
                     column.dynamic() ? dynamicColumns.push(column) : columnsSpace -= column.headerWidth();
