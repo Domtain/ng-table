@@ -474,11 +474,6 @@
                 }
             };
 
-            this.hasSortingChanges = function () {
-                var previousSorting = (prevParamsMemento && prevParamsMemento.params.sorting);
-                return !angular.equals((params.sorting), previousSorting);
-            };
-
             /**
              * @ngdoc method
              * @name NgTableParams#hasFilterChanges

@@ -71,7 +71,7 @@
                     else {
                         currentParams.update();
                     }
-                } else if (currentParams.hasSortingChanges()) {
+                } else {
                     currentParams.reload();
                 }
             }
