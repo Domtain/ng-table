@@ -977,6 +977,11 @@
                 }
             };
 
+            this.hasSortingChanges = function () {
+                var previousSorting = (prevParamsMemento && prevParamsMemento.params.sorting);
+                return !angular.equals((params.sorting), previousSorting);
+            };
+
             /**
              * @ngdoc method
              * @name NgTableParams#hasFilterChanges
@@ -1038,6 +1043,11 @@
                 function isSignificantValue(value, key) {
                     return key === "group" ? true : angular.isDefined(value) && value !== "";
                 }
+            };
+
+            this.update = function () {
+                prevParamsMemento = angular.copy(createComparableParams());
+                log('ngTable: update params');
             };
 
             /**
@@ -1352,7 +1362,10 @@
                             applyFilter();
                         }
                     }
-                } else {
+                    else {
+                        currentParams.update();
+                    }
+                } else if (currentParams.hasSortingChanges()) {
                     currentParams.reload();
                 }
             }

@@ -68,7 +68,10 @@
                             applyFilter();
                         }
                     }
-                } else {
+                    else {
+                        currentParams.update();
+                    }
+                } else if (currentParams.hasSortingChanges()) {
                     currentParams.reload();
                 }
             }
