@@ -1,4 +1,4 @@
-<tr ng-show="show_filter" class="ng-table-filters">
+<tr id="filterRow" ng-show="show_filter" class="ng-table-filters">
     <th colspan="{{getColspan($columns, $column)}}"
         data-title-text="{{$column.titleAlt(this) || $column.title(this)}}"
         ng-repeat="$column in ::getGroupedColumns($columns)"
